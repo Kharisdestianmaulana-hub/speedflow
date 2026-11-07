@@ -1,0 +1,287 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+
+export component SfSidebarItem {
+    in property <string> text: "Nav Item";
+    in property <bool> active: false;
+    in property <bool> collapsed: false;
+    in property <int> badge-count: 0;
+    in property <image> icon;
+    callback clicked();
+
+    height: 40px;
+
+    bg := Rectangle {
+        border-radius: 5px;
+        clip: true;
+        background: root.active ? (ThemeColors.is-dark ? #32363E : #E2E6EC) :
+                    (touch.has-hover ? (ThemeColors.is-dark ? #2B2F37 : #EAEDF2) : Colors.transparent);
+
+        // Active left indicator pill
+        if root.active: Rectangle {
+            x: 0px;
+            y: 9px;
+            width: 3px;
+            height: parent.height - 18px;
+            border-radius: 1.5px;
+            background: ThemeColors.brand-primary;
+        }
+
+        // Expanded mode: Icon + Label + Badge
+        if !root.collapsed: HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 12px;
+            spacing: 12px;
+
+            VerticalLayout {
+                alignment: center;
+                Image {
+                    source: root.icon;
+                    width: 17px;
+                    height: 17px;
+                    colorize: root.active ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                }
+            }
+
+            Text {
+                text: root.text;
+                font-size: 13px;
+                font-weight: root.active ? 600 : 500;
+                color: root.active ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                overflow: elide;
+            }
+
+            if root.badge-count > 0: VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    height: 18px;
+                    min-width: 18px;
+                    border-radius: 9px;
+                    background: root.active ? ThemeColors.brand-primary : ThemeColors.surface-hover;
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        padding-right: 6px;
+                        alignment: center;
+
+                        Text {
+                            text: root.badge-count;
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: root.active ? ThemeColors.brand-text : ThemeColors.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Collapsed mode: Centered Icon Only + subtle badge dot
+        if root.collapsed: Rectangle {
+            width: 100%;
+            height: 100%;
+
+            Image {
+                source: root.icon;
+                width: 18px;
+                height: 18px;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+                colorize: root.active ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+            }
+
+            if root.badge-count > 0: Rectangle {
+                x: (parent.width / 2) + 4px;
+                y: (parent.height / 2) - 10px;
+                width: 7px;
+                height: 7px;
+                border-radius: 3.5px;
+                background: ThemeColors.brand-primary;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+export component SfSidebar {
+    in-out property <int> current-tab: 0; // 0: Tasks, 1: Queue, 2: History, 3: Settings
+    in-out property <bool> collapsed: false;
+    in property <int> active-count: 0;
+    in property <int> queued-count: 0;
+    callback theme_toggle_clicked();
+
+    width: root.collapsed ? 64px : 200px;
+    animate width { duration: 140ms; easing: ease-in-out; }
+
+    Rectangle {
+        background: ThemeColors.surface-secondary;
+        clip: true;
+
+        // Right 1px Hairline Border
+        Rectangle {
+            x: parent.width - 1px;
+            y: 0;
+            width: 1px;
+            height: parent.height;
+            background: ThemeColors.border;
+        }
+
+        VerticalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-top: 0px;
+            padding-bottom: 10px;
+            spacing: 4px;
+
+            // 1. Brand Header (50px height to align with top bar, clickable to toggle sidebar)
+            Rectangle {
+                height: 50px;
+                border-radius: 5px;
+                background: header-touch.has-hover ? (ThemeColors.is-dark ? #2B2F37 : #EAEDF2) : Colors.transparent;
+
+                if !root.collapsed: HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 10px;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: 10px;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                source: @image-url("../../../assets/logo/logo-32.png");
+                                width: 24px;
+                                height: 24px;
+                            }
+                        }
+
+                        Text {
+                            text: "SpeedFlow";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: ThemeColors.text-primary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Collapse indicator («)
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: "«";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: ThemeColors.text-tertiary;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                if root.collapsed: Rectangle {
+                    width: 100%;
+                    height: 100%;
+
+                    Image {
+                        source: @image-url("../../../assets/logo/logo-32.png");
+                        width: 24px;
+                        height: 24px;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                    }
+                }
+
+                header-touch := TouchArea {
+                    clicked => {
+                        root.collapsed = !root.collapsed;
+                    }
+                }
+            }
+
+            // Top Hairline Separator (aligned with 50px main header bar)
+            Rectangle {
+                height: 1px;
+                background: ThemeColors.border;
+            }
+
+            // 2. Top Navigation Items (Tasks, Queue, History)
+            VerticalLayout {
+                padding-top: 6px;
+                spacing: 4px;
+                alignment: start;
+
+                SfSidebarItem {
+                    text: "Tasks";
+                    icon: @image-url("../../../assets/icons/download.svg");
+                    active: root.current-tab == 0;
+                    collapsed: root.collapsed;
+                    badge-count: root.active-count;
+                    clicked => { root.current-tab = 0; }
+                }
+
+                SfSidebarItem {
+                    text: "Queue";
+                    icon: @image-url("../../../assets/icons/list.svg");
+                    active: root.current-tab == 1;
+                    collapsed: root.collapsed;
+                    badge-count: root.queued-count;
+                    clicked => { root.current-tab = 1; }
+                }
+
+                SfSidebarItem {
+                    text: "History";
+                    icon: @image-url("../../../assets/icons/history.svg");
+                    active: root.current-tab == 2;
+                    collapsed: root.collapsed;
+                    clicked => { root.current-tab = 2; }
+                }
+            }
+
+            // 3. Flexible Middle Spacer (pushes Theme & Settings to the very bottom)
+            Rectangle {
+                vertical-stretch: 1;
+                background: Colors.transparent;
+            }
+
+            // Bottom Hairline Separator
+            Rectangle {
+                height: 1px;
+                background: ThemeColors.border;
+            }
+
+            // 4. Bottom Pinned Actions: Theme Switcher (above) & Settings (very bottom)
+            VerticalLayout {
+                padding-top: 4px;
+                spacing: 4px;
+                alignment: end;
+
+                // Above Settings: Theme Mode Switcher
+                SfSidebarItem {
+                    text: ThemeColors.is-dark ? "Dark Theme" : "Light Theme";
+                    icon: ThemeColors.is-dark ? @image-url("../../../assets/icons/moon.svg") : @image-url("../../../assets/icons/sun.svg");
+                    active: false;
+                    collapsed: root.collapsed;
+                    clicked => {
+                        ThemeColors.is-dark = !ThemeColors.is-dark;
+                        root.theme_toggle_clicked();
+                    }
+                }
+
+                // Very Bottom: Settings
+                SfSidebarItem {
+                    text: "Settings";
+                    icon: @image-url("../../../assets/icons/settings.svg");
+                    active: root.current-tab == 3;
+                    collapsed: root.collapsed;
+                    clicked => { root.current-tab = 3; }
+                }
+            }
+        }
+    }
+}

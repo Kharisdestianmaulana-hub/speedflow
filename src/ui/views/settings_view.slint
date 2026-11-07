@@ -1,0 +1,957 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+import { SfButton, ButtonVariant } from "../components/button.slint";
+import { SfInput } from "../components/input.slint";
+import { SfToggle } from "../components/toggle.slint";
+
+export component SfSettingsView inherits Rectangle {
+    in-out property <string> download_path: "C:\\Users\\riray\\Downloads";
+    in-out property <int> max_connections: 16;
+    in-out property <int> max_simultaneous: 3;
+    in-out property <bool> auto_retry: true;
+    in-out property <bool> auto_categorize: true;
+    in-out property <bool> autostart: false;
+    in-out property <bool> notifications: true;
+    in-out property <bool> speed_limit_enabled: false;
+    in-out property <string> speed_limit_kb: "2048";
+
+    // Browser Integration properties
+    in-out property <bool> chrome_installed: true;
+    in-out property <bool> chrome_integrated: false;
+    in-out property <bool> edge_installed: true;
+    in-out property <bool> edge_integrated: false;
+    in-out property <bool> firefox_installed: false;
+    in-out property <bool> firefox_integrated: false;
+    in-out property <bool> brave_installed: false;
+    in-out property <bool> brave_integrated: false;
+    in-out property <bool> bridge_active: true;
+    in-out property <string> extension_id: "jlilenmnliblbcdidjnbfpaejpliolek";
+    in-out property <string> integration_msg: "";
+
+    callback browse_path_clicked();
+    callback install_browser_integration();
+    callback remove_browser_integration();
+    callback open_extension_folder();
+    callback copy_chrome_extensions_url();
+    callback toggle_autostart(bool);
+
+    background: Colors.transparent;
+
+    Flickable {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        content-width: root.width;
+        content-height: max(root.height, content.preferred-height);
+
+        content := VerticalLayout {
+            x: 0;
+            y: 0;
+            width: root.width;
+            height: self.preferred-height;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 16px;
+            padding-bottom: 28px;
+            spacing: 18px;
+
+            // Section 1: Storage & Directories
+            VerticalLayout {
+                spacing: 8px;
+
+                Text {
+                    text: "STORAGE & DIRECTORIES";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: ThemeColors.brand-primary;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 12px;
+
+                        VerticalLayout {
+                            spacing: 3px;
+                            Text {
+                                text: "Default Download Directory";
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: ThemeColors.text-primary;
+                            }
+                            Text {
+                                text: "Primary destination folder on disk where completed downloads are saved.";
+                                font-size: 12px;
+                                color: ThemeColors.text-secondary;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            height: 34px;
+
+                            SfInput {
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                text <=> root.download_path;
+                                placeholder: "Select directory...";
+                            }
+
+                            SfButton {
+                                text: "Browse...";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 34px;
+                                has-icon: true;
+                                icon: @image-url("../../../assets/icons/folder.svg");
+                                clicked => { root.browse_path_clicked(); }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Auto-Categorize Subfolders
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Auto-Categorize Subfolders";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Automatically sort downloads into Compressed, Programs, Video, Music, Documents, and Images folders.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                SfToggle {
+                                    checked <=> root.auto_categorize;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 2: Engine & Acceleration
+            VerticalLayout {
+                spacing: 8px;
+
+                Text {
+                    text: "DOWNLOAD ENGINE & CONCURRENCY";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: ThemeColors.brand-primary;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 14px;
+
+                        // Parallel Connections
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Parallel Connections Per Download";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Number of segmented HTTP byte-range threads per file.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+
+                                HorizontalLayout {
+                                    spacing: 6px;
+                                    alignment: end;
+
+                                    SfButton {
+                                        text: "-";
+                                        variant: ButtonVariant.secondary;
+                                        btn-height: 30px;
+                                        clicked => {
+                                            if root.max_connections > 1 {
+                                                root.max_connections = root.max_connections - 1;
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 68px;
+                                        height: 30px;
+                                        border-radius: 4px;
+                                        background: ThemeColors.surface-hover;
+                                        border-width: 1px;
+                                        border-color: ThemeColors.border;
+
+                                        Text {
+                                            text: root.max_connections + " th";
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    SfButton {
+                                        text: "+";
+                                        variant: ButtonVariant.secondary;
+                                        btn-height: 30px;
+                                        clicked => {
+                                            if root.max_connections < 32 {
+                                                root.max_connections = root.max_connections + 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Simultaneous Downloads
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Simultaneous Active Downloads";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Maximum concurrent active tasks before queuing.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+
+                                HorizontalLayout {
+                                    spacing: 6px;
+                                    alignment: end;
+
+                                    SfButton {
+                                        text: "-";
+                                        variant: ButtonVariant.secondary;
+                                        btn-height: 30px;
+                                        clicked => {
+                                            if root.max_simultaneous > 1 {
+                                                root.max_simultaneous = root.max_simultaneous - 1;
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 68px;
+                                        height: 30px;
+                                        border-radius: 4px;
+                                        background: ThemeColors.surface-hover;
+                                        border-width: 1px;
+                                        border-color: ThemeColors.border;
+
+                                        Text {
+                                            text: root.max_simultaneous + " tasks";
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    SfButton {
+                                        text: "+";
+                                        variant: ButtonVariant.secondary;
+                                        btn-height: 30px;
+                                        clicked => {
+                                            if root.max_simultaneous < 10 {
+                                                root.max_simultaneous = root.max_simultaneous + 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Auto Retry
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Automatic Retry On Network Disconnect";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Resumes failed chunks with exponential backoff (up to 5 retries).";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                SfToggle {
+                                    checked <=> root.auto_retry;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Bandwidth & System
+            VerticalLayout {
+                spacing: 8px;
+
+                Text {
+                    text: "BANDWIDTH & SYSTEM BEHAVIOR";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: ThemeColors.brand-primary;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 14px;
+
+                        // Speed Limit Toggle
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Global Bandwidth Limiter";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Throttle download transfer rate to conserve network bandwidth.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                SfToggle {
+                                    checked <=> root.speed_limit_enabled;
+                                }
+                            }
+                        }
+
+                        if root.speed_limit_enabled: HorizontalLayout {
+                            height: 32px;
+                            spacing: 12px;
+                            alignment: space-between;
+
+                            Text {
+                                text: "Maximum Speed Limit (KB/s)";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: ThemeColors.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            SfInput {
+                                width: 140px;
+                                height: 32px;
+                                horizontal-stretch: 0;
+                                text <=> root.speed_limit_kb;
+                                placeholder: "e.g. 2048";
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Desktop Notifications
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Desktop System Notifications";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Show toast notification when a download completes or encounters errors.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                SfToggle {
+                                    checked <=> root.notifications;
+                                }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Launch at Windows Startup (Background Tray Mode)
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Launch SpeedFlow at Windows Startup (Background Tray)";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Automatically start SpeedFlow minimized in the system tray when you sign in to Windows.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                SfToggle {
+                                    checked <=> root.autostart;
+                                    toggled(val) => {
+                                        root.toggle_autostart(val);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 4: Browser Integration & Extension
+            VerticalLayout {
+                spacing: 8px;
+
+                Text {
+                    text: "BROWSER INTEGRATION & EXTENSION";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: ThemeColors.brand-primary;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 14px;
+
+                        // Row 1: Automatic Integration for Edge & Firefox
+                        HorizontalLayout {
+                            alignment: space-between;
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: "Automatic Browser Integration (Microsoft Edge & Mozilla Firefox)";
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Automatically registers SpeedFlow extension into Microsoft Edge and Mozilla Firefox via Windows Registry.";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    alignment: end;
+
+                                    if (root.edge_integrated || root.firefox_integrated): SfButton {
+                                        text: "Remove";
+                                        variant: ButtonVariant.ghost;
+                                        btn-height: 30px;
+                                        clicked => { root.remove_browser_integration(); }
+                                    }
+
+                                    SfButton {
+                                        text: (root.edge_integrated || root.firefox_integrated) ? "Update Auto-Integration" : "Auto-Integrate (Edge & Firefox)";
+                                        variant: ButtonVariant.primary;
+                                        btn-height: 30px;
+                                        has-icon: true;
+                                        icon: @image-url("../../../assets/icons/check.svg");
+                                        clicked => { root.install_browser_integration(); }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Row 2: Browser & Bridge Status Badges
+                        HorizontalLayout {
+                            height: 26px;
+                            alignment: space-between;
+                            spacing: 12px;
+
+                            Text {
+                                text: "Detected Browsers & Local Bridge";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: ThemeColors.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+
+                                // Microsoft Edge Badge
+                                Rectangle {
+                                    height: 26px;
+                                    border-radius: 4px;
+                                    background: root.edge_integrated ? ThemeColors.brand-primary.transparentize(0.85) : (root.edge_installed ? #F59E0B.transparentize(0.85) : ThemeColors.surface-hover);
+                                    border-width: 1px;
+                                    border-color: root.edge_integrated ? ThemeColors.brand-primary.transparentize(0.5) : (root.edge_installed ? #F59E0B.transparentize(0.5) : ThemeColors.border);
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        spacing: 6px;
+                                        alignment: center;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/activity.svg");
+                                                width: 12px;
+                                                height: 12px;
+                                                colorize: root.edge_integrated ? ThemeColors.brand-primary : (root.edge_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "Edge: " + (root.edge_integrated ? "Auto Active" : (root.edge_installed ? "Ready" : "Not Found"));
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            color: root.edge_integrated ? ThemeColors.brand-primary : (root.edge_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                // Mozilla Firefox Badge
+                                Rectangle {
+                                    height: 26px;
+                                    border-radius: 4px;
+                                    background: root.firefox_integrated ? ThemeColors.brand-primary.transparentize(0.85) : (root.firefox_installed ? #F59E0B.transparentize(0.85) : ThemeColors.surface-hover);
+                                    border-width: 1px;
+                                    border-color: root.firefox_integrated ? ThemeColors.brand-primary.transparentize(0.5) : (root.firefox_installed ? #F59E0B.transparentize(0.5) : ThemeColors.border);
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        spacing: 6px;
+                                        alignment: center;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/activity.svg");
+                                                width: 12px;
+                                                height: 12px;
+                                                colorize: root.firefox_integrated ? ThemeColors.brand-primary : (root.firefox_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "Firefox: " + (root.firefox_integrated ? "Auto Active" : (root.firefox_installed ? "Ready" : "Not Found"));
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            color: root.firefox_integrated ? ThemeColors.brand-primary : (root.firefox_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                // Google Chrome Badge (Auto-detects loaded unpacked extension in Chrome User Data)
+                                Rectangle {
+                                    height: 26px;
+                                    border-radius: 4px;
+                                    background: root.chrome_integrated ? ThemeColors.brand-primary.transparentize(0.85) : (root.chrome_installed ? #F59E0B.transparentize(0.85) : ThemeColors.surface-hover);
+                                    border-width: 1px;
+                                    border-color: root.chrome_integrated ? ThemeColors.brand-primary.transparentize(0.5) : (root.chrome_installed ? #F59E0B.transparentize(0.5) : ThemeColors.border);
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        spacing: 6px;
+                                        alignment: center;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/activity.svg");
+                                                width: 12px;
+                                                height: 12px;
+                                                colorize: root.chrome_integrated ? ThemeColors.brand-primary : (root.chrome_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "Chrome: " + (root.chrome_integrated ? "Active" : (root.chrome_installed ? "Manual Setup" : "Not Found"));
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            color: root.chrome_integrated ? ThemeColors.brand-primary : (root.chrome_installed ? #F59E0B : ThemeColors.text-tertiary);
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                // Bridge Server Badge
+                                Rectangle {
+                                    height: 26px;
+                                    border-radius: 4px;
+                                    background: ThemeColors.surface-hover;
+                                    border-width: 1px;
+                                    border-color: ThemeColors.border;
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        spacing: 6px;
+                                        alignment: center;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/zap.svg");
+                                                width: 12px;
+                                                height: 12px;
+                                                colorize: root.bridge_active ? ThemeColors.brand-primary : ThemeColors.text-tertiary;
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "Bridge: 127.0.0.1:19760 " + (root.bridge_active ? "(Listening)" : "(Offline)");
+                                            font-size: 11px;
+                                            font-weight: 600;
+                                            color: root.bridge_active ? ThemeColors.text-primary : ThemeColors.text-tertiary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Divider
+                        Rectangle { height: 1px; background: ThemeColors.border; }
+
+                        // Row 3: Google Chrome & Brave Manual Setup Guide (Developer Mode)
+                        Rectangle {
+                            border-radius: 4px;
+                            background: ThemeColors.surface-hover;
+                            border-width: 1px;
+                            border-color: ThemeColors.border;
+
+                            VerticalLayout {
+                                padding: 14px;
+                                spacing: 10px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    spacing: 12px;
+
+                                    VerticalLayout {
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+                                        spacing: 2px;
+
+                                        Text {
+                                            text: root.chrome_integrated ? "Google Chrome & Brave — Extension Loaded & Active" : "Google Chrome & Brave — Manual Setup Guide (Developer Mode)";
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                            color: root.chrome_integrated ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                        }
+                                        Text {
+                                            text: "Chrome requires loading local extensions via Developer Mode in 3 quick steps:";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        alignment: center;
+
+                                        HorizontalLayout {
+                                            spacing: 8px;
+                                            alignment: end;
+
+                                            SfButton {
+                                                text: "Copy chrome://extensions";
+                                                variant: ButtonVariant.secondary;
+                                                btn-height: 28px;
+                                                clicked => { root.copy_chrome_extensions_url(); }
+                                            }
+
+                                            SfButton {
+                                                text: "Open Extension Folder";
+                                                variant: ButtonVariant.secondary;
+                                                btn-height: 28px;
+                                                has-icon: true;
+                                                icon: @image-url("../../../assets/icons/folder.svg");
+                                                clicked => { root.open_extension_folder(); }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: 4px;
+
+                                    Text {
+                                        text: "1. Click 'Copy chrome://extensions' above, then paste & open it in your Chrome or Brave address bar.";
+                                        font-size: 12px;
+                                        color: ThemeColors.text-primary;
+                                    }
+                                    Text {
+                                        text: "2. Turn ON the 'Developer mode' switch in the top-right corner of the Chrome Extensions page.";
+                                        font-size: 12px;
+                                        color: ThemeColors.text-primary;
+                                    }
+                                    Text {
+                                        text: "3. Click 'Open Extension Folder' above, then click 'Load unpacked' in Chrome and select the 'extension' folder (or drag & drop it).";
+                                        font-size: 12px;
+                                        color: ThemeColors.text-primary;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Status notification message banner
+                        if root.integration_msg != "": Rectangle {
+                            height: 32px;
+                            border-radius: 4px;
+                            background: ThemeColors.brand-primary.transparentize(0.9);
+                            border-width: 1px;
+                            border-color: ThemeColors.brand-primary.transparentize(0.6);
+
+                            HorizontalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                spacing: 8px;
+                                alignment: start;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Image {
+                                        source: @image-url("../../../assets/icons/check.svg");
+                                        width: 14px;
+                                        height: 14px;
+                                        colorize: ThemeColors.brand-primary;
+                                    }
+                                }
+
+                                Text {
+                                    text: root.integration_msg;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Section 5: About SpeedFlow
+            VerticalLayout {
+                spacing: 8px;
+
+                Text {
+                    text: "ABOUT SPEEDFLOW";
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: ThemeColors.brand-primary;
+                }
+
+                Rectangle {
+                    border-radius: 4px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 14px;
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            Rectangle {
+                                width: 44px;
+                                height: 44px;
+                                border-radius: 6px;
+                                background: ThemeColors.surface-hover;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../../assets/logo/logo-32.png");
+                                            width: 26px;
+                                            height: 26px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 4px;
+                            alignment: center;
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+
+                                Text {
+                                    text: "SpeedFlow";
+                                    font-size: 15px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                    vertical-alignment: center;
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+
+                                    Rectangle {
+                                        height: 20px;
+                                        border-radius: 4px;
+                                        background: ThemeColors.brand-primary.transparentize(0.85);
+                                        border-width: 1px;
+                                        border-color: ThemeColors.brand-primary.transparentize(0.5);
+
+                                        HorizontalLayout {
+                                            padding-left: 8px;
+                                            padding-right: 8px;
+                                            alignment: center;
+
+                                            Text {
+                                                text: "v0.1.0-alpha";
+                                                font-size: 11px;
+                                                font-weight: 700;
+                                                color: ThemeColors.brand-primary;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "High-Performance Multi-threaded Desktop Download Manager & Accelerator.";
+                                font-size: 12px;
+                                color: ThemeColors.text-secondary;
+                            }
+
+                            Text {
+                                text: "Powered by Rust 2024, Tokio Async Engine, Slint Flat UI & SQLite Database.";
+                                font-size: 11px;
+                                color: ThemeColors.text-tertiary;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

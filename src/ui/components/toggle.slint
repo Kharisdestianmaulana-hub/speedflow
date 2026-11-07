@@ -1,0 +1,39 @@
+import { ThemeColors } from "../theme/colors.slint";
+
+export component SfToggle {
+    in-out property <bool> checked: false;
+    in property <bool> enabled: true;
+    callback toggled(bool);
+
+    width: 38px;
+    height: 20px;
+    vertical-stretch: 0;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        background: root.checked ? ThemeColors.brand-primary : (ThemeColors.is-dark ? #374151 : #D1D5DB);
+        animate background { duration: 120ms; }
+
+        // Knob
+        Rectangle {
+            x: root.checked ? 20px : 2px;
+            y: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            background: #FFFFFF;
+            animate x { duration: 120ms; }
+        }
+    }
+
+    TouchArea {
+        enabled: root.enabled;
+        clicked => {
+            root.checked = !root.checked;
+            root.toggled(root.checked);
+        }
+    }
+}

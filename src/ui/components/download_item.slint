@@ -1,0 +1,316 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+import { SfButton, ButtonVariant } from "button.slint";
+import { SfProgressBar } from "progress_bar.slint";
+import { SfStatusBadge } from "status_badge.slint";
+
+export struct DownloadItemData {
+    id: string,
+    filename: string,
+    url: string,
+    status: string,
+    downloaded_bytes: string,
+    total_bytes: string,
+    progress: float,
+    speed: string,
+    eta: string,
+    active_connections: int,
+    category: string,
+    checksum: string,
+    checksum_short: string,
+    segment_count: int,
+    seg0: float,
+    seg1: float,
+    seg2: float,
+    seg3: float,
+    seg4: float,
+    seg5: float,
+    seg6: float,
+    seg7: float,
+}
+
+export component SfDownloadItem {
+    in property <DownloadItemData> item;
+    property <bool> copied_feedback: false;
+    callback pause_resume_clicked(string);
+    callback cancel_clicked(string);
+    callback request_cancel_clicked(string, string);
+    callback request_update_url_clicked(string, string, string);
+    callback open_folder_clicked(string);
+    callback open_file_clicked(string);
+    callback retry_clicked(string);
+    callback copy_checksum_clicked(string);
+
+    height: 90px;
+
+    Rectangle {
+        border-radius: 6px;
+        background: ThemeColors.surface;
+        border-width: 1px;
+        border-color: ThemeColors.border;
+
+        VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            spacing: 8px;
+            alignment: space-between;
+
+            // Row 1: File Icon, Name, Status Badge, and Action Buttons
+            HorizontalLayout {
+                height: 26px;
+                spacing: 12px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 10px;
+                    horizontal-stretch: 1;
+
+                    Image {
+                        source: @image-url("../../../assets/icons/download.svg");
+                        width: 16px;
+                        height: 16px;
+                        y: (parent.height - self.height) / 2;
+                        colorize: ThemeColors.brand-primary;
+                    }
+
+                    Text {
+                        text: root.item.filename;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: ThemeColors.text-primary;
+                        overflow: elide;
+                        vertical-alignment: center;
+                    }
+
+                    SfStatusBadge {
+                        status: root.item.status;
+                    }
+
+                    if root.item.status == "downloading" && root.item.active_connections > 0: Rectangle {
+                        height: 20px;
+                        border-radius: 4px;
+                        background: ThemeColors.brand-primary.transparentize(0.88);
+                        border-width: 1px;
+                        border-color: ThemeColors.brand-primary.transparentize(0.6);
+
+                        HorizontalLayout {
+                            padding-left: 7px;
+                            padding-right: 7px;
+                            spacing: 4px;
+                            alignment: center;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../../assets/icons/zap.svg");
+                                    width: 11px;
+                                    height: 11px;
+                                    colorize: ThemeColors.brand-primary;
+                                }
+                            }
+
+                            Text {
+                                text: root.item.active_connections + " Conn";
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: ThemeColors.brand-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Action Buttons
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    if root.item.status == "downloading": SfButton {
+                        text: "Pause";
+                        variant: ButtonVariant.secondary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/pause.svg");
+                        clicked => { root.pause_resume_clicked(root.item.id); }
+                    }
+
+                    if root.item.status == "paused": SfButton {
+                        text: "Resume";
+                        variant: ButtonVariant.primary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/play.svg");
+                        clicked => { root.pause_resume_clicked(root.item.id); }
+                    }
+
+                    if root.item.status == "failed": SfButton {
+                        text: "Retry";
+                        variant: ButtonVariant.primary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/play.svg");
+                        clicked => { root.retry_clicked(root.item.id); }
+                    }
+
+                    if root.item.status == "paused" || root.item.status == "failed": SfButton {
+                        text: "Update URL";
+                        variant: ButtonVariant.secondary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/link.svg");
+                        clicked => { root.request_update_url_clicked(root.item.id, root.item.filename, root.item.url); }
+                    }
+
+                    if root.item.status == "completed": SfButton {
+                        text: "Open";
+                        variant: ButtonVariant.primary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/file-text.svg");
+                        clicked => { root.open_file_clicked(root.item.id); }
+                    }
+
+                    if root.item.status == "completed": SfButton {
+                        text: "Folder";
+                        variant: ButtonVariant.secondary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/folder.svg");
+                        clicked => { root.open_folder_clicked(root.item.id); }
+                    }
+
+                    SfButton {
+                        text: root.item.status == "completed" ? "Remove" : "Cancel";
+                        variant: ButtonVariant.ghost;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/x.svg");
+                        clicked => {
+                            if root.item.status == "completed" {
+                                root.cancel_clicked(root.item.id);
+                            } else {
+                                root.request_cancel_clicked(root.item.id, root.item.filename);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Row 2: Visual Multi-Segment Progress Bar (or Single Progress Bar)
+            if root.item.segment_count > 1 && root.item.status != "completed": HorizontalLayout {
+                height: 6px;
+                spacing: 3px;
+
+                for seg_prog in [root.item.seg0, root.item.seg1, root.item.seg2, root.item.seg3, root.item.seg4, root.item.seg5, root.item.seg6, root.item.seg7]: Rectangle {
+                    horizontal-stretch: 1;
+                    height: 6px;
+                    border-radius: 2px;
+                    background: ThemeColors.border;
+                    clip: true;
+
+                    Rectangle {
+                        x: 0;
+                        y: 0;
+                        height: parent.height;
+                        width: parent.width * Math.clamp(seg_prog, 0.0, 1.0);
+                        border-radius: 2px;
+                        background: root.item.status == "paused" ? ThemeColors.status-paused :
+                                    root.item.status == "failed" ? ThemeColors.status-failed :
+                                    ThemeColors.brand-primary;
+                    }
+                }
+            }
+
+            if root.item.segment_count <= 1 || root.item.status == "completed": SfProgressBar {
+                progress: root.item.progress;
+                bar-height: 6px;
+                fill-color: root.item.status == "completed" ? ThemeColors.status-completed :
+                            root.item.status == "paused" ? ThemeColors.status-paused :
+                            root.item.status == "failed" ? ThemeColors.status-failed :
+                            ThemeColors.brand-primary;
+            }
+
+            // Row 3: Tabular Size, Speed, ETA
+            HorizontalLayout {
+                height: 20px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Text {
+                        text: root.item.downloaded_bytes + " / " + root.item.total_bytes;
+                        font-size: 12px;
+                        color: ThemeColors.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "•";
+                        font-size: 12px;
+                        color: ThemeColors.text-tertiary;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: Math.round(root.item.progress * 100) + "%";
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: ThemeColors.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 12px;
+
+                    if root.item.status == "downloading": Text {
+                        text: root.item.speed;
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: ThemeColors.brand-primary;
+                        vertical-alignment: center;
+                    }
+
+                    if root.item.status == "downloading" && root.item.eta != "": Text {
+                        text: "ETA: " + root.item.eta;
+                        font-size: 12px;
+                        color: ThemeColors.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    if root.item.status == "completed" && root.item.checksum != "": Rectangle {
+                        height: 20px;
+                        border-radius: 4px;
+                        background: sha-touch.has-hover ? ThemeColors.brand-primary.transparentize(0.85) : ThemeColors.surface-hover;
+                        border-width: 1px;
+                        border-color: root.copied_feedback ? ThemeColors.brand-primary : ThemeColors.border;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: center;
+
+                            Text {
+                                text: root.copied_feedback ? "✓ SHA-256 Copied!" : ("SHA-256: " + root.item.checksum_short + "  •  Copy");
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: root.copied_feedback || sha-touch.has-hover ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        sha-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.copied_feedback = true;
+                                root.copy_checksum_clicked(root.item.checksum);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

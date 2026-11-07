@@ -1,0 +1,55 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+
+export component SfInput {
+    in-out property <string> text: "";
+    in property <string> placeholder: "";
+    in property <bool> enabled: true;
+    callback accepted(string);
+    callback edited(string);
+
+    min-width: 60px;
+    height: 34px;
+    horizontal-stretch: 1;
+
+    bg := Rectangle {
+        width: 100%;
+        height: 100%;
+        clip: true;
+        border-radius: 4px;
+        background: ThemeColors.surface;
+        border-width: inp.has-focus ? 1.5px : 1px;
+        border-color: inp.has-focus ? ThemeColors.brand-primary : ThemeColors.border;
+
+        inp := TextInput {
+            x: 12px;
+            width: Math.max(0px, parent.width - 24px);
+            height: 100%;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+            text <=> root.text;
+            font-size: 13px;
+            color: ThemeColors.text-primary;
+            single-line: true;
+            enabled: root.enabled;
+
+            accepted => {
+                root.accepted(self.text);
+            }
+            edited => {
+                root.edited(self.text);
+            }
+        }
+
+        if root.text == "" && !inp.has-focus: Text {
+            x: 12px;
+            width: Math.max(0px, parent.width - 24px);
+            height: 100%;
+            text: root.placeholder;
+            font-size: 13px;
+            color: ThemeColors.text-tertiary;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+}

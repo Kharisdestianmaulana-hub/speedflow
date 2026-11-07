@@ -1,0 +1,25 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+
+export component SfProgressBar {
+    in property <float> progress: 0.0; // 0.0 to 1.0
+    in property <color> fill-color: ThemeColors.brand-primary;
+    in property <length> bar-height: 4px;
+
+    height: root.bar-height;
+
+    track := Rectangle {
+        background: ThemeColors.surface-secondary;
+        border-radius: ThemeTokens.radius-none;
+        border-width: 0px;
+
+        fill := Rectangle {
+            x: 0;
+            y: 0;
+            height: parent.height;
+            width: Math.max(0px, Math.min(parent.width, parent.width * Math.max(0.0, Math.min(1.0, root.progress))));
+            border-radius: ThemeTokens.radius-none;
+            background: root.fill-color;
+        }
+    }
+}

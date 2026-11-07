@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "SpeedFlow Download Interceptor",
+  "version": "1.0.0",
+  "description": "Seamlessly intercepts browser downloads and accelerates them with SpeedFlow Desktop Download Manager.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsdaPaYMI7vGIVCbJzilztwCyoxommi/XKekddjvMJnwcWOAUclE4JoFr4poxTTPZHdijckggUX2AaghYtjlFYA4yCpwzthkGvL0HLy+aFHpub7PlRDPlMlhSVwfGiJtoPt2UZUMc8u0p2W/nfhRCaU07dQixjRIrC8zj9HvLR65VCpxCL3Olll/zOV8XFO3SQrWuJnCGOCyg6QZDtkpkx18P5RrgwUt5ohAmT6KUrNNf3YuGOCTo5adm2qR+0Ghl8cEoKe6X1SUGSsevfWL0IZ7Dk+mQxQ8OGZEvQzYTkMNfVn/EKjFcVzmBJItMHJVWAhD9txZ6Eq0e+LmYe67b4wIDAQAB",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon-32.png",
+    "default_title": "SpeedFlow Downloader"
+  },
+  "permissions": [
+    "downloads",
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://127.0.0.1:19760/*",
+    "http://localhost:19760/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "speedflow@speedflow.app",
+      "strict_min_version": "109.0"
+    }
+  }
+}

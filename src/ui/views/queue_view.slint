@@ -1,0 +1,258 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+import { SfButton, ButtonVariant } from "../components/button.slint";
+
+export struct QueueItemData {
+    id: string,
+    position: int,
+    file_name: string,
+    file_size_display: string,
+    url: string,
+    priority: string, // "High", "Normal", "Low"
+}
+
+export component SfQueueView inherits Rectangle {
+    in property <[QueueItemData]> queue_items: [];
+    in property <int> max_concurrent: 3;
+
+    callback move_up(string);
+    callback move_down(string);
+    callback remove_from_queue(string);
+
+    background: Colors.transparent;
+
+    // Empty State (Clean & Centered)
+    if root.queue_items.length == 0: VerticalLayout {
+        width: 100%;
+        height: 100%;
+        alignment: center;
+        spacing: 12px;
+
+        HorizontalLayout {
+            alignment: center;
+
+            Image {
+                source: @image-url("../../../assets/icons/list.svg");
+                width: 52px;
+                height: 52px;
+                colorize: ThemeColors.text-tertiary;
+            }
+        }
+
+        Text {
+            text: "Queue is Empty";
+            font-size: 16px;
+            font-weight: 600;
+            color: ThemeColors.text-secondary;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: "All added tasks are currently active or completed. New downloads will queue here when slots are busy.";
+            font-size: 13px;
+            color: ThemeColors.text-tertiary;
+            horizontal-alignment: center;
+        }
+    }
+
+    // Queue Items List
+    if root.queue_items.length > 0: Flickable {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        content-width: root.width;
+        content-height: max(root.height, queue_list.preferred-height);
+
+        queue_list := VerticalLayout {
+            x: 0;
+            y: 0;
+            width: root.width;
+            height: self.preferred-height;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 16px;
+            padding-bottom: 24px;
+            spacing: 10px;
+
+                for item in root.queue_items: Rectangle {
+                    height: 62px;
+                    border-radius: 6px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        spacing: 14px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 12px;
+                            horizontal-stretch: 1;
+
+                            // Position Number
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: 28px;
+                                    height: 28px;
+                                    border-radius: 14px;
+                                    background: ThemeColors.surface-hover;
+
+                                    Text {
+                                        text: "#" + item.position;
+                                        font-size: 12px;
+                                        font-weight: 700;
+                                        color: ThemeColors.text-primary;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            // File Info
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 4px;
+
+                                Text {
+                                    text: item.file_name;
+                                    font-size: 14px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                    overflow: elide;
+                                }
+
+                                Text {
+                                    text: item.file_size_display + " • " + item.url;
+                                    font-size: 11px;
+                                    color: ThemeColors.text-tertiary;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+
+                        // Right side: Priority Badge + Reorder & Remove controls
+                        VerticalLayout {
+                            alignment: center;
+
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: end;
+
+                                // Priority Badge
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        height: 22px;
+                                        border-radius: 4px;
+                                        background: item.priority == "High" ? #EF4444.transparentize(0.85) :
+                                                    item.priority == "Low" ? #6B7280.transparentize(0.85) :
+                                                    ThemeColors.brand-primary.transparentize(0.85);
+                                        border-width: 1px;
+                                        border-color: item.priority == "High" ? #EF4444.transparentize(0.5) :
+                                                      item.priority == "Low" ? #6B7280.transparentize(0.5) :
+                                                      ThemeColors.brand-primary.transparentize(0.5);
+
+                                        HorizontalLayout {
+                                            padding-left: 8px;
+                                            padding-right: 8px;
+                                            alignment: center;
+
+                                            Text {
+                                                text: item.priority;
+                                                font-size: 11px;
+                                                font-weight: 600;
+                                                color: item.priority == "High" ? #EF4444 :
+                                                       item.priority == "Low" ? ThemeColors.text-secondary :
+                                                       ThemeColors.brand-primary;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 28px;
+                                    height: 28px;
+                                    border-radius: 4px;
+                                    background: move-up-touch.has-hover ? ThemeColors.surface-hover : Colors.transparent;
+
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/arrow-up.svg");
+                                                width: 14px;
+                                                height: 14px;
+                                                colorize: ThemeColors.text-secondary;
+                                            }
+                                        }
+                                    }
+
+                                    move-up-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.move_up(item.id); }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 28px;
+                                    height: 28px;
+                                    border-radius: 4px;
+                                    background: move-down-touch.has-hover ? ThemeColors.surface-hover : Colors.transparent;
+
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/arrow-down.svg");
+                                                width: 14px;
+                                                height: 14px;
+                                                colorize: ThemeColors.text-secondary;
+                                            }
+                                        }
+                                    }
+
+                                    move-down-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.move_down(item.id); }
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 28px;
+                                    height: 28px;
+                                    border-radius: 4px;
+                                    background: remove-touch.has-hover ? #EF4444.transparentize(0.85) : Colors.transparent;
+
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/trash-2.svg");
+                                                width: 14px;
+                                                height: 14px;
+                                                colorize: remove-touch.has-hover ? #EF4444 : ThemeColors.text-secondary;
+                                            }
+                                        }
+                                    }
+
+                                    remove-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.remove_from_queue(item.id); }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+        }
+    }
+}

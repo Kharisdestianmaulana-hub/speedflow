@@ -1,0 +1,37 @@
+export global ThemeColors {
+    // Gopeed-Style Vibrant Green Brand Accent (#78C375)
+    in property <color> brand-primary: #78C375;
+    in property <color> brand-hover: #65B462;
+    in property <color> brand-active: #529F4F;
+    in property <color> brand-subtle: is-dark ? #1C2D1F : #EAF7E9;
+    in property <color> brand-text: #111827;
+
+    // Theme Mode
+    in-out property <bool> is-dark: true;
+
+    // Gopeed Matte Dark & Clean Light Surfaces
+    out property <color> background: is-dark ? #2A2D32 : #F3F4F6;
+    out property <color> surface: is-dark ? #343840 : #FFFFFF;
+    out property <color> surface-secondary: is-dark ? #212327 : #EBECEF;
+    out property <color> surface-hover: is-dark ? #3E434D : #E2E5E9;
+    out property <color> surface-active: is-dark ? #474D58 : #D6DAE0;
+
+    // 1px Hairline Borders
+    out property <color> border: is-dark ? #383C45 : #DCE0E6;
+    out property <color> border-strong: is-dark ? #484E5A : #C4CAD3;
+
+    // Typography (High Legibility)
+    out property <color> text-primary: is-dark ? #F3F4F6 : #111827;
+    out property <color> text-secondary: is-dark ? #9CA3AF : #6B7280;
+    out property <color> text-tertiary: is-dark ? #6B7280 : #9CA3AF;
+    out property <color> text-disabled: is-dark ? #4B5563 : #D1D5DB;
+
+    // Semantic Status Colors
+    out property <color> status-downloading: #78C375;
+    out property <color> status-queued: is-dark ? #9CA3AF : #6B7280;
+    out property <color> status-paused: #F59E0B;
+    out property <color> status-completed: #10B981;
+    out property <color> status-failed: #EF4444;
+    out property <color> status-retrying: #F59E0B;
+    out property <color> status-cancelled: is-dark ? #9CA3AF : #6B7280;
+}

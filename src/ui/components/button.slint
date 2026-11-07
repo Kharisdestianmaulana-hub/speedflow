@@ -1,0 +1,64 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+
+export enum ButtonVariant {
+    primary,
+    secondary,
+    ghost,
+    danger,
+}
+
+export component SfButton {
+    in property <string> text: "Button";
+    in property <ButtonVariant> variant: ButtonVariant.primary;
+    in property <bool> enabled: true;
+    in property <length> btn-height: 32px;
+    in property <image> icon;
+    in property <bool> has-icon: false;
+    callback clicked();
+
+    height: root.btn-height;
+    vertical-stretch: 0;
+    horizontal-stretch: 0;
+
+    bg := Rectangle {
+        border-radius: 4px;
+        background: root.variant == ButtonVariant.primary ? (touch.pressed ? ThemeColors.brand-active : (touch.has-hover ? ThemeColors.brand-hover : ThemeColors.brand-primary)) :
+                    root.variant == ButtonVariant.danger ? #EF4444 :
+                    root.variant == ButtonVariant.ghost ? (touch.has-hover ? ThemeColors.surface-hover : Colors.transparent) :
+                    (touch.has-hover ? ThemeColors.surface-hover : ThemeColors.surface);
+        border-width: root.variant == ButtonVariant.secondary ? 1px : 0px;
+        border-color: ThemeColors.border;
+
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 8px;
+
+            if root.has-icon: VerticalLayout {
+                alignment: center;
+                Image {
+                    source: root.icon;
+                    width: 14px;
+                    height: 14px;
+                    colorize: root.variant == ButtonVariant.primary ? ThemeColors.brand-text : ThemeColors.text-primary;
+                }
+            }
+
+            txt := Text {
+                text: root.text;
+                font-size: 13px;
+                font-weight: 600;
+                vertical-alignment: center;
+                color: root.variant == ButtonVariant.primary ? ThemeColors.brand-text :
+                       root.variant == ButtonVariant.danger ? #FFFFFF :
+                       ThemeColors.text-primary;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+}

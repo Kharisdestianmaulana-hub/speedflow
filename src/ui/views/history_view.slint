@@ -1,0 +1,271 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+import { SfButton, ButtonVariant } from "../components/button.slint";
+import { SfStatusBadge } from "../components/status_badge.slint";
+
+export struct HistoryItemData {
+    id: string,
+    file_name: string,
+    file_size_display: string,
+    completed_at: string,
+    file_path: string,
+    checksum: string,
+    status: string, // "Completed", "Failed"
+}
+
+component SfHistoryCard {
+    in property <HistoryItemData> item;
+    property <bool> copied_feedback: false;
+
+    callback open_file(string);
+    callback open_folder(string);
+    callback request_delete_history_item(string, string, string);
+    callback copy_checksum(string);
+
+    height: 78px;
+
+    Rectangle {
+        border-radius: 6px;
+        background: ThemeColors.surface;
+        border-width: 1px;
+        border-color: ThemeColors.border;
+
+        VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            spacing: 8px;
+            alignment: space-between;
+
+            // Row 1: Status Icon, File Name, Status Badge (Left) + Action Buttons (Right)
+            HorizontalLayout {
+                height: 26px;
+                spacing: 12px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 10px;
+                    horizontal-stretch: 1;
+
+                    Image {
+                        source: root.item.status == "Completed" ? @image-url("../../../assets/icons/circle-check.svg") : @image-url("../../../assets/icons/circle-alert.svg");
+                        width: 16px;
+                        height: 16px;
+                        y: (parent.height - self.height) / 2;
+                        colorize: root.item.status == "Completed" ? ThemeColors.brand-primary : #EF4444;
+                    }
+
+                    Text {
+                        text: root.item.file_name;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: ThemeColors.text-primary;
+                        overflow: elide;
+                        vertical-alignment: center;
+                    }
+
+                    SfStatusBadge {
+                        status: root.item.status == "Completed" ? "completed" : "failed";
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    SfButton {
+                        text: "Open File";
+                        variant: ButtonVariant.primary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/file-text.svg");
+                        clicked => { root.open_file(root.item.id); }
+                    }
+
+                    SfButton {
+                        text: "Folder";
+                        variant: ButtonVariant.secondary;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/folder.svg");
+                        clicked => { root.open_folder(root.item.id); }
+                    }
+
+                    SfButton {
+                        text: "Remove";
+                        variant: ButtonVariant.ghost;
+                        btn-height: 26px;
+                        has-icon: true;
+                        icon: @image-url("../../../assets/icons/trash-2.svg");
+                        clicked => { root.request_delete_history_item(root.item.id, root.item.file_name, root.item.file_path); }
+                    }
+                }
+            }
+
+            // Row 2: Size, Date, Destination Path (Left) + Interactive SHA-256 Badge (Right)
+            HorizontalLayout {
+                height: 20px;
+                spacing: 12px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    horizontal-stretch: 1;
+
+                    Text {
+                        text: root.item.file_size_display;
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: ThemeColors.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "•";
+                        font-size: 12px;
+                        color: ThemeColors.text-tertiary;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: root.item.completed_at;
+                        font-size: 12px;
+                        color: ThemeColors.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    if root.item.file_path != "": Text {
+                        text: "•";
+                        font-size: 12px;
+                        color: ThemeColors.text-tertiary;
+                        vertical-alignment: center;
+                    }
+
+                    if root.item.file_path != "": Text {
+                        text: root.item.file_path;
+                        font-size: 11px;
+                        color: ThemeColors.text-tertiary;
+                        overflow: elide;
+                        vertical-alignment: center;
+                    }
+                }
+
+                if root.item.checksum != "": Rectangle {
+                    height: 20px;
+                    border-radius: 4px;
+                    background: sha-touch.has-hover ? ThemeColors.brand-primary.transparentize(0.85) : ThemeColors.surface-hover;
+                    border-width: 1px;
+                    border-color: root.copied_feedback ? ThemeColors.brand-primary : ThemeColors.border;
+
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        spacing: 4px;
+                        alignment: center;
+
+                        Text {
+                            text: root.copied_feedback ? "✓ SHA-256 Copied!" : ("SHA-256: " + root.item.checksum);
+                            max-width: 240px;
+                            overflow: elide;
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: root.copied_feedback ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                            vertical-alignment: center;
+                        }
+
+                        if !root.copied_feedback: Text {
+                            text: "• Copy";
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: ThemeColors.brand-primary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    sha-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.copy_checksum(root.item.checksum);
+                            root.copied_feedback = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component SfHistoryView inherits Rectangle {
+    in property <[HistoryItemData]> history_items: [];
+
+    callback open_file(string);
+    callback open_folder(string);
+    callback request_delete_history_item(string, string, string);
+    callback copy_checksum(string);
+
+    background: Colors.transparent;
+
+    // Empty State (Clean & Centered)
+    if root.history_items.length == 0: VerticalLayout {
+        width: 100%;
+        height: 100%;
+        alignment: center;
+        spacing: 12px;
+
+        HorizontalLayout {
+            alignment: center;
+
+            Image {
+                source: @image-url("../../../assets/icons/history.svg");
+                width: 52px;
+                height: 52px;
+                colorize: ThemeColors.text-tertiary;
+            }
+        }
+
+        Text {
+            text: "No Download History";
+            font-size: 16px;
+            font-weight: 600;
+            color: ThemeColors.text-secondary;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: "Finished downloads will be recorded and archived here with integrity checksums.";
+            font-size: 13px;
+            color: ThemeColors.text-tertiary;
+            horizontal-alignment: center;
+        }
+    }
+
+    // History Records List
+    if root.history_items.length > 0: Flickable {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        content-width: root.width;
+        content-height: max(root.height, history_list.preferred-height);
+
+        history_list := VerticalLayout {
+            x: 0;
+            y: 0;
+            width: root.width;
+            height: self.preferred-height;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 16px;
+            padding-bottom: 24px;
+            spacing: 10px;
+
+            for item in root.history_items: SfHistoryCard {
+                item: item;
+                open_file(id) => { root.open_file(id); }
+                open_folder(id) => { root.open_folder(id); }
+                request_delete_history_item(id, fname, fpath) => { root.request_delete_history_item(id, fname, fpath); }
+                copy_checksum(sha) => { root.copy_checksum(sha); }
+            }
+        }
+    }
+}

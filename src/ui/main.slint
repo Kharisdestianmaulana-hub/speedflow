@@ -1,0 +1,1764 @@
+import { ThemeColors } from "theme/colors.slint";
+import { ThemeTokens } from "theme/tokens.slint";
+import { SfButton, ButtonVariant } from "components/button.slint";
+import { SfInput } from "components/input.slint";
+import { SfDownloadItem, DownloadItemData } from "components/download_item.slint";
+import { SfSidebar } from "layouts/sidebar.slint";
+import { SfQueueView, QueueItemData } from "views/queue_view.slint";
+import { SfHistoryView, HistoryItemData } from "views/history_view.slint";
+import { SfSettingsView } from "views/settings_view.slint";
+
+export { DownloadItemData, QueueItemData, HistoryItemData }
+
+export component MainWindow inherits Window {
+    title: "SpeedFlow — Desktop Download Manager & Accelerator";
+    icon: @image-url("../../assets/logo/logo-32.png");
+    min-width: 900px;
+    min-height: 600px;
+    preferred-width: 1100px;
+    preferred-height: 720px;
+    background: ThemeColors.background;
+
+    // Backend Properties
+    in property <[DownloadItemData]> downloads: [];
+    in property <[QueueItemData]> queue_items: [];
+    in property <[HistoryItemData]> history_items: [];
+    in property <int> active-downloads-count: 0;
+    in property <int> queued-downloads-count: 0;
+    in property <int> completed-downloads-count: 0;
+    in property <string> total-download-speed: "0 B/s";
+    in-out property <bool> show-add-dialog: false;
+    in-out property <bool> show-cancel-dialog: false;
+    in-out property <string> cancel-target-id: "";
+    in-out property <string> cancel-target-filename: "";
+    in-out property <bool> show-delete-history-dialog: false;
+    in-out property <string> delete-history-target-id: "";
+    in-out property <string> delete-history-target-filename: "";
+    in-out property <string> delete-history-target-filepath: "";
+    in-out property <bool> delete-history-also-disk: false;
+    in-out property <bool> show-update-url-dialog: false;
+    in-out property <string> update-url-target-id: "";
+    in-out property <string> update-url-target-filename: "";
+    in-out property <string> update-url-new-text: "";
+    in-out property <string> new-url-text: "";
+    in-out property <string> modal-filename: "";
+    in-out property <string> modal-filesize: "Checking...";
+    in-out property <string> modal-category: "General";
+    in-out property <string> modal-resume-supported: "Supported";
+    in-out property <bool> modal-is-inspecting: false;
+    in-out property <string> destination-path: "C:\\Users\\riray\\Downloads";
+    in-out property <int> current-tab: 0; // 0: Tasks, 1: Queue, 2: History, 3: Settings
+    in-out property <int> active-subtab: 0; // 0: Downloading, 1: Completed
+    in-out property <bool> is-dark <=> ThemeColors.is-dark;
+    in-out property <bool> queue-paused: false;
+    in-out property <string> history-search-query: "";
+    property <bool> prewarm: true;
+
+    Timer {
+        interval: 50ms;
+        running: root.prewarm;
+        triggered => {
+            root.prewarm = false;
+        }
+    }
+
+    // Settings Properties
+    in-out property <int> settings-max-connections: 16;
+    in-out property <int> settings-max-simultaneous: 3;
+    in-out property <bool> settings-auto-retry: true;
+    in-out property <bool> settings-auto-categorize: true;
+    in-out property <bool> settings-autostart: false;
+    in-out property <bool> settings-speed-limit-enabled: false;
+    in-out property <string> settings-speed-limit-kb: "2048";
+    in-out property <string> selected-category: "All";
+
+    // Browser Integration Properties
+    in-out property <bool> browser-chrome-installed: true;
+    in-out property <bool> browser-chrome-integrated: false;
+    in-out property <bool> browser-edge-installed: true;
+    in-out property <bool> browser-edge-integrated: false;
+    in-out property <bool> browser-firefox-installed: false;
+    in-out property <bool> browser-firefox-integrated: false;
+    in-out property <bool> browser-brave-installed: false;
+    in-out property <bool> browser-brave-integrated: false;
+    in-out property <bool> browser-bridge-active: true;
+    in-out property <string> browser-integration-msg: "";
+
+    // Callbacks
+    callback start_download(string, string);
+    callback start_download_full(string, string, string);
+    callback queue_download_full(string, string, string);
+    callback inspect_url_requested(string);
+    callback open_add_dialog_requested();
+    callback pause_resume_task(string);
+    callback pause_all_tasks();
+    callback resume_all_tasks();
+    callback retry_task(string);
+    callback update_task_url(string, string);
+    callback paste_update_url();
+    callback cancel_task(string);
+    callback open_folder_task(string);
+    callback open_file_task(string);
+    callback copy_checksum(string);
+    callback browse_destination();
+    callback toggle_autostart(bool);
+
+    callback install_browser_integration();
+    callback remove_browser_integration();
+    callback open_extension_folder();
+    callback copy_chrome_extensions_url();
+
+    callback pause_resume_queue();
+    callback clear_queue();
+    callback move_queue_up(string);
+    callback move_queue_down(string);
+    callback remove_from_queue(string);
+
+    callback clear_history();
+    callback open_history_file(string);
+    callback open_history_folder(string);
+    callback delete_history_item(string, bool);
+
+    // Main App Area
+    HorizontalLayout {
+        padding: 0px;
+        spacing: 0px;
+
+        // 1. Left Sidebar (SpeedFlow Brand & Navigation)
+        SfSidebar {
+            current-tab <=> root.current-tab;
+            active-count: root.active-downloads-count;
+            queued-count: root.queued-downloads-count;
+        }
+
+        // 2. Right Canvas Area
+        Rectangle {
+            background: ThemeColors.background;
+            horizontal-stretch: 1;
+
+            VerticalLayout {
+                padding: 0px;
+                spacing: 0px;
+
+                // 2A. UNIFIED TOP HEADER BAR (Always 50px height, aligned with sidebar)
+                Rectangle {
+                    height: 50px;
+                    background: ThemeColors.background;
+
+                    // Content for Queue (Tab 1): Queue Title and Actions
+                    HorizontalLayout {
+                        visible: root.current-tab == 1 || root.prewarm;
+                        width: 100%;
+                        height: 100%;
+                        padding-left: 24px;
+                        padding-right: 24px;
+                        alignment: space-between;
+
+                        Text {
+                            text: "Queue";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: ThemeColors.text-primary;
+                            vertical-alignment: center;
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            HorizontalLayout {
+                                spacing: 10px;
+
+                                // Concurrency Info Pill
+                                Rectangle {
+                                    height: 30px;
+                                    border-radius: 4px;
+                                    background: ThemeColors.surface;
+                                    border-width: 1px;
+                                    border-color: ThemeColors.border;
+
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        spacing: 6px;
+
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Image {
+                                                source: @image-url("../../assets/icons/activity.svg");
+                                                width: 13px;
+                                                height: 13px;
+                                                colorize: ThemeColors.brand-primary;
+                                            }
+                                        }
+
+                                        Text {
+                                            text: "Max Active: " + root.settings-max-simultaneous;
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                SfButton {
+                                    text: root.queue-paused ? "Resume Queue" : "Pause Queue";
+                                    variant: ButtonVariant.secondary;
+                                    btn-height: 30px;
+                                    has-icon: true;
+                                    icon: root.queue-paused ? @image-url("../../assets/icons/play.svg") : @image-url("../../assets/icons/pause.svg");
+                                    clicked => { root.pause_resume_queue(); }
+                                }
+
+                                SfButton {
+                                    text: "Clear Queue";
+                                    variant: ButtonVariant.ghost;
+                                    btn-height: 30px;
+                                    has-icon: true;
+                                    icon: @image-url("../../assets/icons/trash-2.svg");
+                                    clicked => { root.clear_queue(); }
+                                }
+                            }
+                        }
+                    }
+
+                    // Content for History (Tab 2): History Title, Search Box, Clear History
+                    HorizontalLayout {
+                        visible: root.current-tab == 2 || root.prewarm;
+                        width: 100%;
+                        height: 100%;
+                        padding-left: 24px;
+                        padding-right: 24px;
+                        alignment: space-between;
+
+                        Text {
+                            text: "History";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: ThemeColors.text-primary;
+                            vertical-alignment: center;
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+
+                            HorizontalLayout {
+                                spacing: 10px;
+
+                                SfInput {
+                                    width: 260px;
+                                    height: 30px;
+                                    placeholder: "Search history records...";
+                                    text <=> root.history-search-query;
+                                }
+
+                                SfButton {
+                                    text: "Clear History";
+                                    variant: ButtonVariant.ghost;
+                                    btn-height: 30px;
+                                    has-icon: true;
+                                    icon: @image-url("../../assets/icons/trash-2.svg");
+                                    clicked => { root.clear_history(); }
+                                }
+                            }
+                        }
+                    }
+
+                    // Content for Settings (Tab 3): Settings Title and Subtitle
+                    HorizontalLayout {
+                        visible: root.current-tab == 3 || root.prewarm;
+                        width: 100%;
+                        height: 100%;
+                        padding-left: 24px;
+                        padding-right: 24px;
+                        alignment: space-between;
+
+                        Text {
+                            text: "Settings";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: ThemeColors.text-primary;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "Preferences & Core Engine Configuration";
+                            font-size: 12px;
+                            color: ThemeColors.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Content for Tasks (Tab 0): Gopeed Dual Sub-tabs (Opaque background so prewarm underneath is invisible)
+                    Rectangle {
+                        visible: root.current-tab == 0;
+                        width: 100%;
+                        height: 100%;
+                        background: ThemeColors.background;
+
+                        HorizontalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding: 0px;
+                            spacing: 0px;
+
+                            // Subtab 0: Downloading
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                background: Colors.transparent;
+
+                                Image {
+                                    source: @image-url("../../assets/icons/download.svg");
+                                    width: 20px;
+                                    height: 20px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    colorize: root.active-subtab == 0 ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                }
+
+                                if root.active-subtab == 0: Rectangle {
+                                    x: 0;
+                                    y: parent.height - 2px;
+                                    width: parent.width;
+                                    height: 2px;
+                                    background: ThemeColors.brand-primary;
+                                }
+
+                                TouchArea {
+                                    clicked => { root.active-subtab = 0; }
+                                }
+                            }
+
+                            // Subtab 1: Completed
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                background: Colors.transparent;
+
+                                Image {
+                                    source: @image-url("../../assets/icons/circle-check.svg");
+                                    width: 20px;
+                                    height: 20px;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    colorize: root.active-subtab == 1 ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                }
+
+                                if root.active-subtab == 1: Rectangle {
+                                    x: 0;
+                                    y: parent.height - 2px;
+                                    width: parent.width;
+                                    height: 2px;
+                                    background: ThemeColors.brand-primary;
+                                }
+
+                                TouchArea {
+                                    clicked => { root.active-subtab = 1; }
+                                }
+                            }
+                        }
+                    }
+
+                    // Bottom 1px hairline border divider
+                    Rectangle {
+                        x: 0;
+                        y: parent.height - 1px;
+                        width: parent.width;
+                        height: 1px;
+                        background: ThemeColors.border;
+                    }
+                }
+
+                // 2B. VIEW CONTENT BODY CONTAINER (Always stretches to fill remaining height from top to bottom)
+                Rectangle {
+                    vertical-stretch: 1;
+
+                    // Tab 1: Queue View Body
+                    SfQueueView {
+                        visible: root.current-tab == 1 || root.prewarm;
+                        x: 0;
+                        y: 0;
+                        width: parent.width;
+                        height: parent.height;
+                        queue_items: root.queue_items;
+                        max_concurrent: root.settings-max-simultaneous;
+                        move_up(id) => { root.move_queue_up(id); }
+                        move_down(id) => { root.move_queue_down(id); }
+                        remove_from_queue(id) => { root.remove_from_queue(id); }
+                    }
+
+                    // Tab 2: History View Body
+                    SfHistoryView {
+                        visible: root.current-tab == 2 || root.prewarm;
+                        x: 0;
+                        y: 0;
+                        width: parent.width;
+                        height: parent.height;
+                        history_items: root.history_items;
+                        open_file(id) => { root.open_history_file(id); }
+                        open_folder(id) => { root.open_history_folder(id); }
+                        request_delete_history_item(id, fname, fpath) => {
+                            root.delete-history-target-id = id;
+                            root.delete-history-target-filename = fname;
+                            root.delete-history-target-filepath = fpath;
+                            root.delete-history-also-disk = false;
+                            root.show-delete-history-dialog = true;
+                        }
+                        copy_checksum(sha) => { root.copy_checksum(sha); }
+                    }
+
+                    // Tab 3: Settings View Body
+                    SfSettingsView {
+                        visible: root.current-tab == 3 || root.prewarm;
+                        x: 0;
+                        y: 0;
+                        width: parent.width;
+                        height: parent.height;
+                        download_path <=> root.destination-path;
+                        max_connections <=> root.settings-max-connections;
+                        max_simultaneous <=> root.settings-max-simultaneous;
+                        auto_retry <=> root.settings-auto-retry;
+                        auto_categorize <=> root.settings-auto-categorize;
+                        autostart <=> root.settings-autostart;
+                        speed_limit_enabled <=> root.settings-speed-limit-enabled;
+                        speed_limit_kb <=> root.settings-speed-limit-kb;
+
+                        chrome_installed <=> root.browser-chrome-installed;
+                        chrome_integrated <=> root.browser-chrome-integrated;
+                        edge_installed <=> root.browser-edge-installed;
+                        edge_integrated <=> root.browser-edge-integrated;
+                        firefox_installed <=> root.browser-firefox-installed;
+                        firefox_integrated <=> root.browser-firefox-integrated;
+                        brave_installed <=> root.browser-brave-installed;
+                        brave_integrated <=> root.browser-brave-integrated;
+                        bridge_active <=> root.browser-bridge-active;
+                        integration_msg <=> root.browser-integration-msg;
+
+                        browse_path_clicked => { root.browse_destination(); }
+                        install_browser_integration => { root.install_browser_integration(); }
+                        remove_browser_integration => { root.remove_browser_integration(); }
+                        open_extension_folder => { root.open_extension_folder(); }
+                        copy_chrome_extensions_url => { root.copy_chrome_extensions_url(); }
+                        toggle_autostart(val) => { root.toggle_autostart(val); }
+                    }
+
+                    // Tab 0: Tasks View Body (Opaque background on top so prewarm views underneath are hidden at startup)
+                    Rectangle {
+                        visible: root.current-tab == 0;
+                        x: 0;
+                        y: 0;
+                        width: parent.width;
+                        height: parent.height;
+                        background: ThemeColors.background;
+
+                        VerticalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding: 0px;
+                            spacing: 0px;
+
+                            // Sub-Toolbar: Category Filter Pills (Left) & Live Total Speed + Bulk Actions (Right)
+                            Rectangle {
+                                height: 44px;
+                                background: ThemeColors.background;
+
+                                HorizontalLayout {
+                                    padding-left: 20px;
+                                    padding-right: 20px;
+                                    alignment: space-between;
+                                    spacing: 12px;
+
+                                    // Left: Category Filter Pills
+                                    HorizontalLayout {
+                                        spacing: 6px;
+                                        alignment: start;
+
+                                        for cat in ["All", "Compressed", "Programs", "Video", "Music", "Documents", "Images"]: VerticalLayout {
+                                            alignment: center;
+
+                                            Rectangle {
+                                                height: 26px;
+                                                border-radius: 4px;
+                                                background: root.selected-category == cat ? ThemeColors.brand-primary.transparentize(0.85) : (cat-touch.has-hover ? ThemeColors.surface-hover : Colors.transparent);
+                                                border-width: 1px;
+                                                border-color: root.selected-category == cat ? ThemeColors.brand-primary.transparentize(0.5) : ThemeColors.border;
+
+                                                HorizontalLayout {
+                                                    padding-left: 10px;
+                                                    padding-right: 10px;
+                                                    alignment: center;
+
+                                                    Text {
+                                                        text: cat;
+                                                        font-size: 11px;
+                                                        font-weight: root.selected-category == cat ? 700 : 600;
+                                                        color: root.selected-category == cat ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                                        vertical-alignment: center;
+                                                    }
+                                                }
+
+                                                cat-touch := TouchArea {
+                                                    mouse-cursor: pointer;
+                                                    clicked => {
+                                                        root.selected-category = cat;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Right: Pause All / Resume All Bulk Actions
+                                    VerticalLayout {
+                                        alignment: center;
+
+                                        HorizontalLayout {
+                                            spacing: 8px;
+                                            alignment: end;
+
+                                            if root.active-subtab == 0 && root.active-downloads-count > 0: SfButton {
+                                                text: "Pause All";
+                                                variant: ButtonVariant.secondary;
+                                                btn-height: 26px;
+                                                has-icon: true;
+                                                icon: @image-url("../../assets/icons/pause.svg");
+                                                clicked => { root.pause_all_tasks(); }
+                                            }
+
+                                            if root.active-subtab == 0 && root.active-downloads-count > 0: SfButton {
+                                                text: "Resume All";
+                                                variant: ButtonVariant.secondary;
+                                                btn-height: 26px;
+                                                has-icon: true;
+                                                icon: @image-url("../../assets/icons/play.svg");
+                                                clicked => { root.resume_all_tasks(); }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    x: 0;
+                                    y: parent.height - 1px;
+                                    width: parent.width;
+                                    height: 1px;
+                                    background: ThemeColors.border;
+                                }
+                            }
+
+                            // Tasks Content Container
+                            Rectangle {
+                                vertical-stretch: 1;
+
+                                // Empty State (Clean & Centered)
+                                if (root.active-subtab == 0 && root.active-downloads-count == 0) || (root.active-subtab == 1 && root.completed-downloads-count == 0): VerticalLayout {
+                                    x: 0;
+                                    y: 0;
+                                    width: parent.width;
+                                    height: parent.height;
+                                    alignment: center;
+                                    spacing: 12px;
+
+                                    HorizontalLayout {
+                                        alignment: center;
+
+                                        Image {
+                                            source: @image-url("../../assets/icons/inbox.svg");
+                                            width: 52px;
+                                            height: 52px;
+                                            colorize: ThemeColors.text-tertiary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.active-subtab == 0 ? "No Active Tasks" : "No Completed Tasks";
+                                        font-size: 16px;
+                                        font-weight: 600;
+                                        color: ThemeColors.text-secondary;
+                                        horizontal-alignment: center;
+                                    }
+
+                                    Text {
+                                        text: root.active-subtab == 0 ? "Click '+' button at bottom right to add a download task." : "Completed downloads will appear here.";
+                                        font-size: 13px;
+                                        color: ThemeColors.text-tertiary;
+                                        horizontal-alignment: center;
+                                    }
+                                }
+
+                                // Downloads List
+                                if (root.active-subtab == 0 && root.active-downloads-count > 0) || (root.active-subtab == 1 && root.completed-downloads-count > 0): Flickable {
+                                    x: 0;
+                                    y: 0;
+                                    width: parent.width;
+                                    height: parent.height;
+                                    content-width: parent.width;
+                                    content-height: max(parent.height, tasks_list.preferred-height);
+
+                                    tasks_list := VerticalLayout {
+                                        x: 0;
+                                        y: 0;
+                                        width: parent.width;
+                                        height: self.preferred-height;
+                                        padding-left: 20px;
+                                        padding-right: 20px;
+                                        padding-top: 16px;
+                                        padding-bottom: 80px;
+                                        spacing: 10px;
+
+                                        for item in root.downloads: SfDownloadItem {
+                                            visible: ((root.active-subtab == 0 && item.status != "completed") || (root.active-subtab == 1 && item.status == "completed"))
+                                                && (root.selected-category == "All" || item.category == root.selected-category);
+                                            item: item;
+                                            pause_resume_clicked(id) => { root.pause_resume_task(id); }
+                                            retry_clicked(id) => { root.retry_task(id); }
+                                            cancel_clicked(id) => { root.cancel_task(id); }
+                                            request_cancel_clicked(id, fname) => {
+                                                root.cancel-target-id = id;
+                                                root.cancel-target-filename = fname;
+                                                root.show-cancel-dialog = true;
+                                            }
+                                            request_update_url_clicked(id, fname, cur_url) => {
+                                                root.update-url-target-id = id;
+                                                root.update-url-target-filename = fname;
+                                                root.update-url-new-text = cur_url;
+                                                root.show-update-url-dialog = true;
+                                            }
+                                            open_folder_clicked(id) => { root.open_folder_task(id); }
+                                            open_file_clicked(id) => { root.open_file_task(id); }
+                                            copy_checksum_clicked(sha) => { root.copy_checksum(sha); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Floating Action Button (FAB) at Bottom-Right (Only on Tasks View)
+            if root.current-tab == 0: Rectangle {
+                x: parent.width - 74px;
+                y: parent.height - 74px;
+                width: 52px;
+                height: 52px;
+                border-radius: 26px;
+                background: fab-touch.pressed ? ThemeColors.brand-active :
+                            (fab-touch.has-hover ? ThemeColors.brand-hover : #9AE6B4);
+
+                Image {
+                    source: @image-url("../../assets/icons/plus.svg");
+                    width: 22px;
+                    height: 22px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    colorize: #111827; // Crisp black plus icon
+                }
+
+                fab-touch := TouchArea {
+                    clicked => {
+                        root.open_add_dialog_requested();
+                        root.show-add-dialog = true;
+                    }
+                }
+            }
+
+            // Add Download Dialog Modal (Centered Overlay with Dimmed Backdrop)
+            if root.show-add-dialog: Rectangle {
+                width: 100%;
+                height: 100%;
+                background: #000000.transparentize(0.5);
+
+                TouchArea {
+                    clicked => {
+                        root.show-add-dialog = false;
+                    }
+                }
+
+                // Modal Dialog Box
+                Rectangle {
+                    width: 620px;
+                    height: 350px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    clip: true;
+                    background: ThemeColors.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    VerticalLayout {
+                        padding: 24px;
+                        spacing: 14px;
+                        alignment: space-between;
+
+                        // 1. Modal Header
+                        HorizontalLayout {
+                            height: 28px;
+                            alignment: space-between;
+
+                            HorizontalLayout {
+                                spacing: 10px;
+                                alignment: start;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    Image {
+                                        source: @image-url("../../assets/logo/logo-32.png");
+                                        width: 20px;
+                                        height: 20px;
+                                    }
+                                }
+
+                                Text {
+                                    text: "Download File Info";
+                                    font-size: 15px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            Rectangle {
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 4px;
+                                background: close-touch.has-hover ? ThemeColors.surface-hover : Colors.transparent;
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../assets/icons/x.svg");
+                                            width: 14px;
+                                            height: 14px;
+                                            colorize: ThemeColors.text-secondary;
+                                        }
+                                    }
+                                }
+
+                                close-touch := TouchArea {
+                                    clicked => { root.show-add-dialog = false; }
+                                }
+                            }
+                        }
+
+                        // 2. URL Input Row
+                        HorizontalLayout {
+                            height: 34px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "URL:";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: ThemeColors.text-secondary;
+                                width: 64px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                            }
+
+                            SfInput {
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                placeholder: "Enter or paste download URL (HTTP/HTTPS)...";
+                                text <=> root.new-url-text;
+                                accepted(val) => {
+                                    if val != "" {
+                                        root.inspect_url_requested(val);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 3. Save As (Filename) Input Row
+                        HorizontalLayout {
+                            height: 34px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "Save As:";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: ThemeColors.text-secondary;
+                                width: 64px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                            }
+
+                            SfInput {
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                placeholder: "Filename (e.g. Ubuntu-24.04.iso)...";
+                                text <=> root.modal-filename;
+                            }
+                        }
+
+                        // 4. File Meta Badges Row
+                        HorizontalLayout {
+                            height: 26px;
+                            spacing: 10px;
+                            padding-left: 76px;
+                            alignment: start;
+
+                            // Size Badge
+                            Rectangle {
+                                height: 26px;
+                                border-radius: 4px;
+                                background: ThemeColors.surface-hover;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 6px;
+                                    alignment: center;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../assets/icons/gauge.svg");
+                                            width: 13px;
+                                            height: 13px;
+                                            colorize: ThemeColors.text-secondary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.modal-filesize != "" ? root.modal-filesize : "Unknown Size";
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: ThemeColors.text-primary;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            // Category Badge
+                            Rectangle {
+                                height: 26px;
+                                border-radius: 4px;
+                                background: ThemeColors.surface-hover;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 6px;
+                                    alignment: center;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../assets/icons/file-text.svg");
+                                            width: 13px;
+                                            height: 13px;
+                                            colorize: ThemeColors.brand-primary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.modal-category;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: ThemeColors.brand-primary;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            // Resume Support Badge
+                            Rectangle {
+                                height: 26px;
+                                border-radius: 4px;
+                                background: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary.transparentize(0.85) : #F59E0B.transparentize(0.85);
+                                border-width: 1px;
+                                border-color: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary.transparentize(0.5) : #F59E0B.transparentize(0.5);
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 6px;
+                                    alignment: center;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: root.modal-resume-supported == "Supported" ? @image-url("../../assets/icons/check.svg") : @image-url("../../assets/icons/circle-alert.svg");
+                                            width: 13px;
+                                            height: 13px;
+                                            colorize: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary : #F59E0B;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "Resume: " + root.modal-resume-supported;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary : #F59E0B;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        // 5. Destination Path Row
+                        HorizontalLayout {
+                            height: 34px;
+                            spacing: 12px;
+
+                            Text {
+                                text: "Folder:";
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: ThemeColors.text-secondary;
+                                width: 64px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                            }
+
+                            SfInput {
+                                height: 34px;
+                                horizontal-stretch: 1;
+                                text <=> root.destination-path;
+                            }
+
+                            SfButton {
+                                text: "Browse...";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 34px;
+                                has-icon: true;
+                                icon: @image-url("../../assets/icons/folder.svg");
+                                clicked => {
+                                    root.browse_destination();
+                                }
+                            }
+                        }
+
+                        // 6. Hairline Divider
+                        Rectangle {
+                            height: 1px;
+                            background: ThemeColors.border;
+                        }
+
+                        // 7. Modal Actions Row
+                        HorizontalLayout {
+                            alignment: space-between;
+                            height: 34px;
+
+                            // Left: Connection info pill
+                            Rectangle {
+                                height: 34px;
+                                border-radius: 4px;
+                                background: ThemeColors.surface-hover;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                HorizontalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    spacing: 6px;
+                                    alignment: center;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../assets/icons/zap.svg");
+                                            width: 13px;
+                                            height: 13px;
+                                            colorize: ThemeColors.brand-primary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.settings-max-connections + " Threads Accelerator";
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        color: ThemeColors.text-primary;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            // Right: Action Buttons
+                            HorizontalLayout {
+                                spacing: 10px;
+
+                                SfButton {
+                                    text: "Cancel";
+                                    variant: ButtonVariant.ghost;
+                                    btn-height: 34px;
+                                    clicked => {
+                                        root.show-add-dialog = false;
+                                    }
+                                }
+
+                                SfButton {
+                                    text: "Download Later";
+                                    variant: ButtonVariant.secondary;
+                                    btn-height: 34px;
+                                    has-icon: true;
+                                    icon: @image-url("../../assets/icons/clock.svg");
+                                    clicked => {
+                                        if root.new-url-text != "" {
+                                            root.queue_download_full(root.new-url-text, root.modal-filename, root.destination-path);
+                                            root.new-url-text = "";
+                                            root.modal-filename = "";
+                                            root.show-add-dialog = false;
+                                        }
+                                    }
+                                }
+
+                                SfButton {
+                                    text: "Start Download";
+                                    variant: ButtonVariant.primary;
+                                    btn-height: 34px;
+                                    has-icon: true;
+                                    icon: @image-url("../../assets/icons/download.svg");
+                                    clicked => {
+                                        if root.new-url-text != "" {
+                                            root.start_download_full(root.new-url-text, root.modal-filename, root.destination-path);
+                                            root.new-url-text = "";
+                                            root.modal-filename = "";
+                                            root.show-add-dialog = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Cancel Download Confirmation Modal
+            if root.show-cancel-dialog: Rectangle {
+                width: 100%;
+                height: 100%;
+                background: #000000.transparentize(0.5);
+
+                TouchArea {
+                    clicked => {
+                        root.show-cancel-dialog = false;
+                    }
+                }
+
+                Rectangle {
+                    width: 440px;
+                    height: 196px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    clip: true;
+                    background: ThemeColors.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    TouchArea {}
+
+                    VerticalLayout {
+                        padding: 22px;
+                        spacing: 14px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/circle-alert.svg");
+                                    width: 20px;
+                                    height: 20px;
+                                    colorize: ThemeColors.status-failed;
+                                }
+                            }
+
+                            Text {
+                                text: "Cancel Download?";
+                                font-size: 15px;
+                                font-weight: 700;
+                                color: ThemeColors.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Text {
+                            text: "Are you sure you want to cancel downloading \"" + root.cancel-target-filename + "\"?\nAll partial download progress for this file will be deleted.";
+                            font-size: 12px;
+                            color: ThemeColors.text-secondary;
+                            wrap: word-wrap;
+                        }
+
+                        HorizontalLayout {
+                            alignment: end;
+                            spacing: 10px;
+
+                            SfButton {
+                                text: "Keep Downloading";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 32px;
+                                clicked => {
+                                    root.show-cancel-dialog = false;
+                                }
+                            }
+
+                            SfButton {
+                                text: "Yes, Cancel Download";
+                                variant: ButtonVariant.danger;
+                                btn-height: 32px;
+                                has-icon: true;
+                                icon: @image-url("../../assets/icons/trash-2.svg");
+                                clicked => {
+                                    root.show-cancel-dialog = false;
+                                    root.cancel_task(root.cancel-target-id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Remove History Record Confirmation Modal
+            if root.show-delete-history-dialog: Rectangle {
+                width: 100%;
+                height: 100%;
+                background: #000000.transparentize(0.5);
+
+                TouchArea {
+                    clicked => {
+                        root.show-delete-history-dialog = false;
+                    }
+                }
+
+                Rectangle {
+                    width: 480px;
+                    height: 276px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    clip: true;
+                    background: ThemeColors.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    TouchArea {}
+
+                    VerticalLayout {
+                        padding: 22px;
+                        spacing: 14px;
+                        alignment: space-between;
+
+                        // Header
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/trash-2.svg");
+                                    width: 20px;
+                                    height: 20px;
+                                    colorize: root.delete-history-also-disk ? ThemeColors.status-failed : ThemeColors.brand-primary;
+                                }
+                            }
+
+                            Text {
+                                text: "Remove Download Record";
+                                font-size: 15px;
+                                font-weight: 700;
+                                color: ThemeColors.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Target File Info Box
+                        Rectangle {
+                            height: 54px;
+                            border-radius: 6px;
+                            background: ThemeColors.background;
+                            border-width: 1px;
+                            border-color: ThemeColors.border;
+
+                            VerticalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                alignment: center;
+                                spacing: 3px;
+
+                                Text {
+                                    text: root.delete-history-target-filename;
+                                    font-size: 13px;
+                                    font-weight: 600;
+                                    color: ThemeColors.text-primary;
+                                    overflow: elide;
+                                }
+
+                                Text {
+                                    text: root.delete-history-target-filepath;
+                                    font-size: 11px;
+                                    color: ThemeColors.text-tertiary;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+
+                        // Interactive Checkbox Row
+                        Rectangle {
+                            height: 54px;
+                            border-radius: 6px;
+                            background: chk-touch.has-hover ? ThemeColors.surface-hover : Colors.transparent;
+                            border-width: 1px;
+                            border-color: root.delete-history-also-disk ? ThemeColors.status-failed.transparentize(0.5) : ThemeColors.border;
+
+                            HorizontalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                spacing: 12px;
+                                alignment: start;
+
+                                // Custom Checkbox Box
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 18px;
+                                        height: 18px;
+                                        border-radius: 4px;
+                                        background: root.delete-history-also-disk ? ThemeColors.status-failed : ThemeColors.background;
+                                        border-width: 1.5px;
+                                        border-color: root.delete-history-also-disk ? ThemeColors.status-failed : ThemeColors.text-tertiary;
+
+                                        if root.delete-history-also-disk: Image {
+                                            source: @image-url("../../assets/icons/check.svg");
+                                            width: 12px;
+                                            height: 12px;
+                                            x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
+                                            colorize: #FFFFFF;
+                                        }
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 2px;
+                                    horizontal-stretch: 1;
+
+                                    Text {
+                                        text: "Also permanently delete downloaded file from disk";
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        color: root.delete-history-also-disk ? ThemeColors.status-failed : ThemeColors.text-primary;
+                                    }
+
+                                    Text {
+                                        text: root.delete-history-also-disk ? "Warning: The actual file in your Downloads folder will be deleted!" : "Leave unchecked to keep the downloaded file on your computer.";
+                                        font-size: 11px;
+                                        color: root.delete-history-also-disk ? ThemeColors.status-failed : ThemeColors.text-tertiary;
+                                        overflow: elide;
+                                    }
+                                }
+                            }
+
+                            chk-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.delete-history-also-disk = !root.delete-history-also-disk;
+                                }
+                            }
+                        }
+
+                        // Footer Action Buttons
+                        HorizontalLayout {
+                            alignment: end;
+                            spacing: 10px;
+
+                            SfButton {
+                                text: "Cancel";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 32px;
+                                clicked => {
+                                    root.show-delete-history-dialog = false;
+                                }
+                            }
+
+                            SfButton {
+                                text: root.delete-history-also-disk ? "Delete with File" : "Remove from History";
+                                variant: root.delete-history-also-disk ? ButtonVariant.danger : ButtonVariant.primary;
+                                btn-height: 32px;
+                                has-icon: true;
+                                icon: @image-url("../../assets/icons/trash-2.svg");
+                                clicked => {
+                                    root.show-delete-history-dialog = false;
+                                    root.delete_history_item(root.delete-history-target-id, root.delete-history-also-disk);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Update Download URL Modal (Refresh Expired Link)
+            if root.show-update-url-dialog: Rectangle {
+                width: 100%;
+                height: 100%;
+                background: #000000.transparentize(0.5);
+
+                TouchArea {
+                    clicked => {
+                        root.show-update-url-dialog = false;
+                    }
+                }
+
+                Rectangle {
+                    width: 520px;
+                    height: 248px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                    clip: true;
+                    background: ThemeColors.surface;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+
+                    TouchArea {}
+
+                    VerticalLayout {
+                        padding: 22px;
+                        spacing: 14px;
+                        alignment: space-between;
+
+                        // Header
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/link.svg");
+                                    width: 18px;
+                                    height: 18px;
+                                    colorize: ThemeColors.brand-primary;
+                                }
+                            }
+
+                            Text {
+                                text: "Update Download Link — " + root.update-url-target-filename;
+                                font-size: 15px;
+                                font-weight: 700;
+                                color: ThemeColors.text-primary;
+                                overflow: elide;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        Text {
+                            text: "Paste a fresh download URL below to resume this file from its current progress without starting over from 0%.";
+                            font-size: 12px;
+                            color: ThemeColors.text-secondary;
+                            wrap: word-wrap;
+                        }
+
+                        // New URL Input + Paste Button
+                        HorizontalLayout {
+                            height: 34px;
+                            spacing: 8px;
+
+                            SfInput {
+                                horizontal-stretch: 1;
+                                height: 34px;
+                                placeholder: "https://example.com/fresh-download-link.zip";
+                                text <=> root.update-url-new-text;
+                            }
+
+                            SfButton {
+                                text: "Paste";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 34px;
+                                has-icon: true;
+                                icon: @image-url("../../assets/icons/clipboard.svg");
+                                clicked => {
+                                    root.paste_update_url();
+                                }
+                            }
+                        }
+
+                        // Footer Action Buttons
+                        HorizontalLayout {
+                            alignment: end;
+                            spacing: 10px;
+
+                            SfButton {
+                                text: "Cancel";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 32px;
+                                clicked => {
+                                    root.show-update-url-dialog = false;
+                                }
+                            }
+
+                            SfButton {
+                                text: "Save & Resume";
+                                variant: ButtonVariant.primary;
+                                btn-height: 32px;
+                                has-icon: true;
+                                icon: @image-url("../../assets/icons/play.svg");
+                                clicked => {
+                                    if root.update-url-new-text != "" {
+                                        root.show-update-url-dialog = false;
+                                        root.update_task_url(root.update-url-target-id, root.update-url-new-text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Standalone Download File Info Popup Window (Opens independently when browser intercepts a download)
+export component AddDownloadWindow inherits Window {
+    title: "SpeedFlow — Download File Info";
+    icon: @image-url("../../assets/logo/logo-32.png");
+    width: 620px;
+    height: 350px;
+    background: ThemeColors.surface;
+    always-on-top: true;
+
+    in-out property <string> new-url-text: "";
+    in-out property <string> modal-filename: "";
+    in-out property <string> modal-filesize: "Checking...";
+    in-out property <string> modal-category: "General";
+    in-out property <string> modal-resume-supported: "Supported";
+    in-out property <string> destination-path: "C:\\Users\\riray\\Downloads";
+    in-out property <int> settings-max-connections: 16;
+
+    callback start_download_full(string, string, string);
+    callback queue_download_full(string, string, string);
+    callback inspect_url_requested(string);
+    callback browse_destination();
+    callback close_popup();
+
+    VerticalLayout {
+        padding: 24px;
+        spacing: 14px;
+        alignment: space-between;
+
+        // 1. Header
+        HorizontalLayout {
+            height: 28px;
+            alignment: space-between;
+
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: @image-url("../../assets/logo/logo-32.png");
+                        width: 20px;
+                        height: 20px;
+                    }
+                }
+
+                Text {
+                    text: "Download File Info";
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: ThemeColors.text-primary;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // 2. URL Input Row
+        HorizontalLayout {
+            height: 34px;
+            spacing: 12px;
+
+            Text {
+                text: "URL:";
+                font-size: 12px;
+                font-weight: 600;
+                color: ThemeColors.text-secondary;
+                width: 64px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+
+            SfInput {
+                height: 34px;
+                horizontal-stretch: 1;
+                placeholder: "Enter or paste download URL (HTTP/HTTPS)...";
+                text <=> root.new-url-text;
+                accepted(val) => {
+                    if val != "" {
+                        root.inspect_url_requested(val);
+                    }
+                }
+            }
+        }
+
+        // 3. Save As (Filename) Input Row
+        HorizontalLayout {
+            height: 34px;
+            spacing: 12px;
+
+            Text {
+                text: "Save As:";
+                font-size: 12px;
+                font-weight: 600;
+                color: ThemeColors.text-secondary;
+                width: 64px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+
+            SfInput {
+                height: 34px;
+                horizontal-stretch: 1;
+                placeholder: "Filename (e.g. Ubuntu-24.04.iso)...";
+                text <=> root.modal-filename;
+            }
+        }
+
+        // 4. File Meta Badges Row
+        HorizontalLayout {
+            height: 26px;
+            spacing: 10px;
+            padding-left: 76px;
+            alignment: start;
+
+            // Size Badge
+            Rectangle {
+                height: 26px;
+                border-radius: 4px;
+                background: ThemeColors.surface-hover;
+                border-width: 1px;
+                border-color: ThemeColors.border;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 6px;
+                    alignment: center;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: @image-url("../../assets/icons/gauge.svg");
+                            width: 13px;
+                            height: 13px;
+                            colorize: ThemeColors.text-secondary;
+                        }
+                    }
+
+                    Text {
+                        text: root.modal-filesize != "" ? root.modal-filesize : "Unknown Size";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: ThemeColors.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Category Badge
+            Rectangle {
+                height: 26px;
+                border-radius: 4px;
+                background: ThemeColors.surface-hover;
+                border-width: 1px;
+                border-color: ThemeColors.border;
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 6px;
+                    alignment: center;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: @image-url("../../assets/icons/file-text.svg");
+                            width: 13px;
+                            height: 13px;
+                            colorize: ThemeColors.brand-primary;
+                        }
+                    }
+
+                    Text {
+                        text: root.modal-category;
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: ThemeColors.brand-primary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Resume Support Badge
+            Rectangle {
+                height: 26px;
+                border-radius: 4px;
+                background: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary.transparentize(0.85) : #F59E0B.transparentize(0.85);
+                border-width: 1px;
+                border-color: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary.transparentize(0.5) : #F59E0B.transparentize(0.5);
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 6px;
+                    alignment: center;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: root.modal-resume-supported == "Supported" ? @image-url("../../assets/icons/check.svg") : @image-url("../../assets/icons/circle-alert.svg");
+                            width: 13px;
+                            height: 13px;
+                            colorize: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary : #F59E0B;
+                        }
+                    }
+
+                    Text {
+                        text: "Resume: " + root.modal-resume-supported;
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: root.modal-resume-supported == "Supported" ? ThemeColors.brand-primary : #F59E0B;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // 5. Destination Path Row
+        HorizontalLayout {
+            height: 34px;
+            spacing: 12px;
+
+            Text {
+                text: "Folder:";
+                font-size: 12px;
+                font-weight: 600;
+                color: ThemeColors.text-secondary;
+                width: 64px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+
+            SfInput {
+                height: 34px;
+                horizontal-stretch: 1;
+                text <=> root.destination-path;
+            }
+
+            SfButton {
+                text: "Browse...";
+                variant: ButtonVariant.secondary;
+                btn-height: 34px;
+                has-icon: true;
+                icon: @image-url("../../assets/icons/folder.svg");
+                clicked => {
+                    root.browse_destination();
+                }
+            }
+        }
+
+        // 6. Hairline Divider
+        Rectangle {
+            height: 1px;
+            background: ThemeColors.border;
+        }
+
+        // 7. Actions Row
+        HorizontalLayout {
+            alignment: space-between;
+            height: 34px;
+
+            Rectangle {
+                height: 34px;
+                border-radius: 4px;
+                background: ThemeColors.surface-hover;
+                border-width: 1px;
+                border-color: ThemeColors.border;
+
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    spacing: 6px;
+                    alignment: center;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: @image-url("../../assets/icons/zap.svg");
+                            width: 13px;
+                            height: 13px;
+                            colorize: ThemeColors.brand-primary;
+                        }
+                    }
+
+                    Text {
+                        text: root.settings-max-connections + " Threads Accelerator";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: ThemeColors.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+
+                SfButton {
+                    text: "Cancel";
+                    variant: ButtonVariant.ghost;
+                    btn-height: 34px;
+                    clicked => {
+                        root.close_popup();
+                    }
+                }
+
+                SfButton {
+                    text: "Download Later";
+                    variant: ButtonVariant.secondary;
+                    btn-height: 34px;
+                    has-icon: true;
+                    icon: @image-url("../../assets/icons/clock.svg");
+                    clicked => {
+                        if root.new-url-text != "" {
+                            root.queue_download_full(root.new-url-text, root.modal-filename, root.destination-path);
+                            root.new-url-text = "";
+                            root.modal-filename = "";
+                            root.close_popup();
+                        }
+                    }
+                }
+
+                SfButton {
+                    text: "Start Download";
+                    variant: ButtonVariant.primary;
+                    btn-height: 34px;
+                    has-icon: true;
+                    icon: @image-url("../../assets/icons/download.svg");
+                    clicked => {
+                        if root.new-url-text != "" {
+                            root.start_download_full(root.new-url-text, root.modal-filename, root.destination-path);
+                            root.new-url-text = "";
+                            root.modal-filename = "";
+                            root.close_popup();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

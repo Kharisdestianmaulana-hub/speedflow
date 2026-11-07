@@ -1,0 +1,39 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+
+export component SfStatusBadge {
+    in property <string> status: "queued";
+
+    out property <color> badge-color: 
+        root.status == "downloading" ? ThemeColors.status-downloading :
+        root.status == "completed" ? ThemeColors.status-completed :
+        root.status == "paused" ? ThemeColors.status-paused :
+        root.status == "retrying" ? ThemeColors.status-retrying :
+        root.status == "failed" ? ThemeColors.status-failed :
+        ThemeColors.status-queued;
+
+    height: 18px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: ThemeTokens.radius-none;
+        background: root.badge-color.transparentize(0.85);
+        border-width: 1px;
+        border-color: root.badge-color.transparentize(0.6);
+
+        HorizontalLayout {
+            padding-left: ThemeTokens.space-2;
+            padding-right: ThemeTokens.space-2;
+            alignment: center;
+
+            Text {
+                text: root.status;
+                font-size: ThemeTokens.font-caption;
+                font-weight: 700;
+                color: root.badge-color;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}

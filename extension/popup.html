@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SpeedFlow Downloader</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      width: 290px;
+      background-color: #212327;
+      color: #E2E8F0;
+      padding: 16px;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #33373E;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand img {
+      width: 20px;
+      height: 20px;
+    }
+    .brand h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
+    }
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-online {
+      background: rgba(120, 195, 117, 0.15);
+      color: #78C375;
+      border: 1px solid rgba(120, 195, 117, 0.4);
+    }
+    .status-offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .dot-online { background-color: #78C375; }
+    .dot-offline { background-color: #EF4444; }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #2A2D32;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #33373E;
+      margin-bottom: 12px;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #F1F5F9;
+    }
+    .control-desc {
+      font-size: 10px;
+      color: #94A3B8;
+    }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #475569;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #78C375;
+    }
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    .info-card {
+      background-color: #2A2D32;
+      border-radius: 6px;
+      border: 1px solid #33373E;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #94A3B8;
+      line-height: 1.4;
+    }
+    .info-card strong {
+      color: #CBD5E1;
+    }
+    .tag-container {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .tag {
+      background-color: #1E293B;
+      border: 1px solid #334155;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      color: #78C375;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon-32.png" alt="SpeedFlow Logo">
+      <h1>SpeedFlow</h1>
+    </div>
+    <div id="statusBadge" class="status-badge status-offline">
+      <div id="statusDot" class="dot dot-offline"></div>
+      <span id="statusText">Checking...</span>
+    </div>
+  </div>
+
+  <div class="control-row">
+    <div>
+      <div class="control-label">Intercept Downloads</div>
+      <div class="control-desc">Catch browser download events</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="interceptToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="info-card">
+    <div><strong>Monitored Formats:</strong></div>
+    <div class="tag-container">
+      <span class="tag">.zip</span>
+      <span class="tag">.iso</span>
+      <span class="tag">.exe</span>
+      <span class="tag">.mp4</span>
+      <span class="tag">.mkv</span>
+      <span class="tag">.pdf</span>
+      <span class="tag">.7z</span>
+      <span class="tag">.tar</span>
+      <span class="tag">.apk</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
