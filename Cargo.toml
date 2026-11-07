@@ -2,8 +2,10 @@
 name = "speedflow"
 version = "0.1.0"
 edition = "2024"
-authors = ["SpeedFlow Development Team"]
+authors = ["Kharis Destian Maulana", "SpeedFlow Contributors"]
 description = "Desktop Download Manager & Accelerator"
+license = "GPL-3.0-only"
+repository = "https://github.com/Kharisdestianmaulana-hub/speedflow"
 
 [dependencies]
 # GUI Framework
