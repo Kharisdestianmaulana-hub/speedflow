@@ -1,6 +1,25 @@
-# SpeedFlow
+<p align="center">
+  <img src="assets/logo/logo-128.png" alt="SpeedFlow Logo" width="100" height="100" />
+</p>
 
-High-Performance Desktop Download Manager and Network Accelerator built with Rust and Slint UI.
+<h1 align="center">SpeedFlow</h1>
+
+<p align="center">
+  <strong>High-Performance Desktop Download Manager & Network Accelerator</strong>
+  <br />
+  Built with Rust and Slint UI
+</p>
+
+<p align="center">
+  <a href="https://github.com/Kharisdestianmaulana-hub/speedflow"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg?style=flat-square" alt="Version 0.1.0" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green.svg?style=flat-square" alt="License: GPL-3.0" /></a>
+  <img src="https://img.shields.io/badge/Rust-2024%20Edition-DEA584.svg?style=flat-square&logo=rust&logoColor=white" alt="Rust 2024" />
+  <img src="https://img.shields.io/badge/GUI-Slint%201.18.1-23C7A2.svg?style=flat-square" alt="Slint 1.18.1" />
+  <img src="https://img.shields.io/badge/Platform-Windows-0078D6.svg?style=flat-square&logo=windows&logoColor=white" alt="Platform: Windows" />
+  <img src="https://img.shields.io/badge/Browser-Chrome%20%7C%20Edge%20%7C%20Firefox-6366F1.svg?style=flat-square" alt="Browser Integration" />
+</p>
+
+<br />
 
 SpeedFlow is an open-source desktop application engineered for high-throughput, reliable, and resource-efficient file downloads. By leveraging asynchronous multi-connection chunking, in-flight work-stealing segment splits, and a lightweight native user interface, SpeedFlow provides substantial network acceleration without the memory footprint of web-based desktop wrappers.
 
