@@ -161,6 +161,21 @@ cargo test
 
 ---
 
+## Roadmap (Upcoming v0.2.0)
+
+The following features are scheduled for the upcoming **v0.2.0** release:
+
+- **Automated Download Scheduler:** Configurable start and stop timers for queued downloads, with optional automatic PC Shutdown or Sleep upon queue completion.
+- **Flexible Speed Limiter & Profiles:** Independent per-task transfer rate limits alongside 1-click quick speed profiles:
+  - *Gaming and Browsing Mode:* Caps download speed to 20% to keep ping low and browsing responsive.
+  - *Full Speed Mode:* Restores 100% uncapped parallel acceleration.
+- **Video & Audio Media Sniffer (Preview):** Floating browser overlay widget to detect streaming media with quality selection (1080p, 720p, 480p, MP4, and MP3 audio extraction).
+- **Official Browser Store Availability:** Direct 1-click installation on Microsoft Edge Add-ons Store and Mozilla Firefox AMO (currently under store review).
+
+For complete release history and future exploration, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
 ## Community and Documentation
 
 For detailed information about architecture, contributing, release history, and support, please refer to the following guides:
