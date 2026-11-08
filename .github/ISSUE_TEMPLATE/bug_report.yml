@@ -1,0 +1,117 @@
+name: Bug Report
+description: Create a report to help us fix a defect or unexpected behavior in SpeedFlow
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Pre-submission Checklist
+      description: Please verify that you have completed the following steps before submitting.
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I am using the latest released version of SpeedFlow.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the behavior.
+      placeholder: |
+        1. Open SpeedFlow
+        2. Click on '+' button to add download
+        3. Enter URL '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear description of what you expected to happen.
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Logs
+      description: Drag and drop screenshots or paste log output to help explain the problem.
+      placeholder: Paste images or relevant error logs here...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you running?
+      options:
+        - Windows 11 (64-bit)
+        - Windows 10 (64-bit)
+        - Windows Server
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package_type
+    attributes:
+      label: Package Type
+      description: Which version of SpeedFlow are you using?
+      options:
+        - Windows Installer (Setup.exe)
+        - Portable (.zip)
+        - Built from Source
+    validations:
+      required: true
+
+  - type: input
+    id: app_version
+    attributes:
+      label: SpeedFlow Version
+      description: Version number shown in Settings or file properties.
+      placeholder: e.g. v0.1.0-beta
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser (if related to browser integration)
+      options:
+        - None / Not Applicable
+        - Google Chrome
+        - Microsoft Edge
+        - Mozilla Firefox
+        - Brave Browser
+        - Other Chromium Browser
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (e.g. internet connection type, antivirus software).
+      placeholder: Any other relevant details...
+    validations:
+      required: false
