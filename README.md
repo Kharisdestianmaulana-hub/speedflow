@@ -11,12 +11,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Kharisdestianmaulana-hub/speedflow"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg?style=flat-square" alt="Version 0.1.0" /></a>
+  <a href="https://github.com/Kharisdestianmaulana-hub/speedflow/releases"><img src="https://img.shields.io/badge/version-0.1.0--beta-blue.svg?style=flat-square" alt="Version 0.1.0-beta" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green.svg?style=flat-square" alt="License: GPL-3.0" /></a>
   <img src="https://img.shields.io/badge/Rust-2024%20Edition-DEA584.svg?style=flat-square&logo=rust&logoColor=white" alt="Rust 2024" />
   <img src="https://img.shields.io/badge/GUI-Slint%201.18.1-23C7A2.svg?style=flat-square" alt="Slint 1.18.1" />
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6.svg?style=flat-square&logo=windows&logoColor=white" alt="Platform: Windows" />
-  <img src="https://img.shields.io/badge/Browser-Chrome%20%7C%20Edge%20%7C%20Firefox-6366F1.svg?style=flat-square" alt="Browser Integration" />
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome" /></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/changelog-Keep%20a%20Changelog-orange.svg?style=flat-square" alt="Changelog" /></a>
 </p>
 
 <br />
@@ -67,11 +68,21 @@ SpeedFlow/
 ├── Cargo.toml                  # Cargo manifest and dependency definitions
 ├── build.rs                    # Slint UI ahead-of-time compiler build script
 ├── README.md                   # Project documentation
+├── ARCHITECTURE.md             # Subsystem architecture and technical documentation
+├── CHANGELOG.md                # Version release history and upcoming roadmap
+├── CONTRIBUTING.md             # Contribution guidelines and development setup
+├── CODE_OF_CONDUCT.md          # Community standards and code of conduct
+├── SECURITY.md                 # Vulnerability disclosure and security policy
+├── SUPPORT.md                  # User support resources and FAQ
+├── .github/                    # Issue forms and pull request templates
 ├── assets/                     # Application icons and branding assets
 ├── extension/                  # WebExtension (Chrome, Edge, Firefox, Brave)
 │   ├── manifest.json
 │   ├── background.js
-│   └── popup.html
+│   ├── popup.html
+│   └── icons/
+├── installer/                  # Inno Setup Windows installer configuration
+├── scripts/                    # Automated release packaging PowerShell scripts
 ├── migrations/                 # SQLite schema migration scripts
 ├── src/
 │   ├── main.rs                 # Application entrypoint, event loop, and bridge routing
@@ -87,12 +98,22 @@ SpeedFlow/
 
 ---
 
+## Downloads and Installation
+
+SpeedFlow is currently optimized for Windows 10 and Windows 11 (64-bit). You can download the latest official pre-compiled binaries from [GitHub Releases](https://github.com/Kharisdestianmaulana-hub/speedflow/releases):
+
+- **Windows Installer (`SpeedFlow-Setup-v*.exe`):** Recommended for most users. Includes a standard setup wizard with desktop shortcut, Start Menu shortcut, and automatic uninstaller.
+- **Portable Version (`SpeedFlow-v*-Portable.zip`):** Standalone archive. Extract the zip file and run `speedflow.exe` directly without installation.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 - Rust stable toolchain (version 1.80 or higher)
 - Cargo package manager
 - C++ build tools (required for native platform linking)
+- Inno Setup 6 (optional, required only if compiling the Windows installer)
 
 ### Building from Source
 
@@ -113,8 +134,14 @@ cargo build --release --bin speedflow
 ```
 The compiled executable will be located at `target/release/speedflow.exe`.
 
+4. Generate complete release packages (Installer and Portable):
+```powershell
+.\scripts\package-release.ps1
+```
+The output packages will be placed in the `dist/` folder.
+
 ### Running Tests
-Execute the comprehensive automated test suite:
+Execute the automated test suite:
 ```bash
 cargo test
 ```
@@ -123,7 +150,7 @@ cargo test
 
 ## Browser Extension Installation
 
-1. Navigate to the `extension/` directory in this repository.
+1. Open SpeedFlow Settings and click "Open Extension Folder" (or navigate to `extension/` in this repository).
 2. In Chromium-based browsers (Chrome, Edge, Brave):
    - Open `chrome://extensions` or `edge://extensions`.
    - Enable "Developer mode" in the upper-right corner.
@@ -131,6 +158,21 @@ cargo test
 3. In Firefox:
    - Open `about:debugging#/runtime/this-firefox`.
    - Click "Load Temporary Add-on" and select `extension/manifest.json`.
+
+---
+
+## Community and Documentation
+
+For detailed information about architecture, contributing, release history, and support, please refer to the following guides:
+
+| Document | Description |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | In-depth technical architecture, data flow diagrams, and subsystem breakdown |
+| [CHANGELOG.md](CHANGELOG.md) | Release history and roadmap for upcoming features |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup, contribution guidelines, and commit standards |
+| [SUPPORT.md](SUPPORT.md) | Frequently asked questions, troubleshooting, and community links |
+| [SECURITY.md](SECURITY.md) | Vulnerability disclosure policy and reporting process |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards and pledge (Contributor Covenant v2.1) |
 
 ---
 
