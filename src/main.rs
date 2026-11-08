@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 pub mod app;
 pub mod core;
 pub mod engine;
@@ -53,7 +55,7 @@ fn bring_window_to_foreground(window_title: &str) {
 
 #[cfg(windows)]
 fn bring_popup_to_foreground() {
-    bring_window_to_foreground("SpeedFlow — Download File Info");
+    bring_window_to_foreground("SpeedFlow - Download File Info");
 }
 
 #[tokio::main]
@@ -96,6 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.set_settings_speed_limit_enabled(saved.speed_limit_enabled);
         main_window.set_settings_speed_limit_kb(saved.speed_limit_kb.into());
         main_window.set_is_dark(saved.is_dark);
+        main_window.set_show_onboarding(!saved.onboarding_completed);
 
         service
             .max_connections
@@ -108,6 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .store(saved.auto_categorize, std::sync::atomic::Ordering::Relaxed);
     } else {
         main_window.set_destination_path(default_dest.into());
+        main_window.set_show_onboarding(true);
     }
     main_window.set_settings_autostart(PlatformSystem::is_autostart_enabled());
 
@@ -799,12 +803,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         w.set_browser_edge_integrated(status.edge_integrated);
                         w.set_browser_firefox_integrated(status.firefox_integrated);
                         w.set_browser_brave_integrated(status.brave_integrated);
-                        w.set_browser_integration_msg(
-                            "Auto-Integration registered for Edge & Firefox! Restart your browser to activate.".into()
-                        );
+
+                        let msg = if status.edge_integrated && status.firefox_integrated {
+                            "Successfully connected to Microsoft Edge and Mozilla Firefox! Please restart your browser to activate."
+                        } else if status.edge_integrated {
+                            "Successfully connected to Microsoft Edge! Please restart Edge to activate the extension."
+                        } else if status.firefox_integrated {
+                            "Successfully connected to Mozilla Firefox! Please restart Firefox to activate the extension."
+                        } else if !status.edge_installed && !status.firefox_installed {
+                            if status.chrome_installed || status.brave_installed {
+                                "Edge and Firefox are not installed on this computer. SpeedFlow is ready and connected for Chrome, Brave, and other browsers."
+                            } else {
+                                "Edge and Firefox are not installed on this computer. SpeedFlow is ready and waiting to catch downloads."
+                            }
+                        } else {
+                            "Browser connection is active. The extension is ready to use."
+                        };
+                        w.set_browser_integration_msg(msg.into());
                     }
                     Err(e) => {
-                        w.set_browser_integration_msg(format!("Integration error: {e}").into());
+                        w.set_browser_integration_msg(format!("Note: {e}").into());
                     }
                 }
             }
@@ -822,10 +840,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         w.set_browser_edge_integrated(status.edge_integrated);
                         w.set_browser_firefox_integrated(status.firefox_integrated);
                         w.set_browser_brave_integrated(status.brave_integrated);
-                        w.set_browser_integration_msg("Browser integration unregistered from Windows registry.".into());
+                        w.set_browser_integration_msg("Browser integration has been disconnected.".into());
                     }
                     Err(e) => {
-                        w.set_browser_integration_msg(format!("Failed to unregister: {e}").into());
+                        w.set_browser_integration_msg(format!("Note: {e}").into());
                     }
                 }
             }
@@ -898,6 +916,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     main_window.on_toggle_autostart(move |enabled| {
         let _ = PlatformSystem::set_autostart(enabled);
     });
+
+    {
+        let window_weak = main_window.as_weak();
+        let repo = repo.clone();
+        main_window.on_finish_onboarding(move || {
+            if let Some(w) = window_weak.upgrade() {
+                w.set_show_onboarding(false);
+                let repo = repo.clone();
+                let dest = w.get_destination_path().to_string();
+                let max_conns = w.get_settings_max_connections();
+                let max_sim = w.get_settings_max_simultaneous();
+                let auto_retry = w.get_settings_auto_retry();
+                let auto_cat = w.get_settings_auto_categorize();
+                let limit_enabled = w.get_settings_speed_limit_enabled();
+                let limit_kb_str = w.get_settings_speed_limit_kb().to_string();
+                let is_dark = w.get_is_dark();
+                tokio::spawn(async move {
+                    let settings = AppSettings {
+                        destination_path: dest,
+                        max_connections: max_conns,
+                        max_simultaneous: max_sim,
+                        auto_retry,
+                        auto_categorize: auto_cat,
+                        speed_limit_enabled: limit_enabled,
+                        speed_limit_kb: limit_kb_str,
+                        is_dark,
+                        onboarding_completed: true,
+                    };
+                    let _ = repo.save_settings(&settings).await;
+                });
+            }
+        });
+    }
 
     // 9. Real-time Background Sync Loop (every 300ms)
     {
@@ -994,6 +1045,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             speed_limit_enabled: limit_enabled,
                             speed_limit_kb: limit_kb_str,
                             is_dark,
+                            onboarding_completed: !w.get_show_onboarding(),
                         });
 
                         // Apply model updates to UI
@@ -1051,7 +1103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let _ = w.show();
                                 #[cfg(windows)]
                                 bring_window_to_foreground(
-                                    "SpeedFlow — Desktop Download Manager & Accelerator",
+                                    "SpeedFlow - Desktop Download Manager & Accelerator",
                                 );
                             }
                         });
@@ -1077,7 +1129,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let _ = w.show();
                                 #[cfg(windows)]
                                 bring_window_to_foreground(
-                                    "SpeedFlow — Desktop Download Manager & Accelerator",
+                                    "SpeedFlow - Desktop Download Manager & Accelerator",
                                 );
                             }
                         });

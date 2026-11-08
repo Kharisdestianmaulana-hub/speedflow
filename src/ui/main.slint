@@ -7,11 +7,12 @@ import { SfSidebar } from "layouts/sidebar.slint";
 import { SfQueueView, QueueItemData } from "views/queue_view.slint";
 import { SfHistoryView, HistoryItemData } from "views/history_view.slint";
 import { SfSettingsView } from "views/settings_view.slint";
+import { SfOnboardingView } from "views/onboarding_view.slint";
 
 export { DownloadItemData, QueueItemData, HistoryItemData }
 
 export component MainWindow inherits Window {
-    title: "SpeedFlow — Desktop Download Manager & Accelerator";
+    title: "SpeedFlow - Desktop Download Manager & Accelerator";
     icon: @image-url("../../assets/logo/logo-32.png");
     min-width: 900px;
     min-height: 600px;
@@ -119,8 +120,34 @@ export component MainWindow inherits Window {
     callback open_history_folder(string);
     callback delete_history_item(string, bool);
 
+    in-out property <bool> show-onboarding: false;
+    callback finish_onboarding();
+    callback open_onboarding();
+
+    // Dedicated Full-Page Onboarding Wizard (First Run or Settings)
+    SfOnboardingView {
+        visible: root.show-onboarding;
+        width: 100%;
+        height: 100%;
+        download-path <=> root.destination-path;
+        auto-categorize <=> root.settings-auto-categorize;
+        max-connections <=> root.settings-max-connections;
+        autostart <=> root.settings-autostart;
+        chrome-installed: root.browser-chrome-installed;
+        edge-installed: root.browser-edge-installed;
+        firefox-installed: root.browser-firefox-installed;
+        brave-installed: root.browser-brave-installed;
+        integration-msg: root.browser-integration-msg;
+
+        browse-destination => { root.browse_destination(); }
+        install-browser-integration => { root.install_browser_integration(); }
+        toggle-autostart(val) => { root.toggle_autostart(val); }
+        finish-onboarding => { root.finish_onboarding(); }
+    }
+
     // Main App Area
     HorizontalLayout {
+        visible: !root.show-onboarding;
         padding: 0px;
         spacing: 0px;
 
@@ -282,7 +309,7 @@ export component MainWindow inherits Window {
                         }
 
                         Text {
-                            text: "Preferences & Core Engine Configuration";
+                            text: "Preferences & Download Options";
                             font-size: 12px;
                             color: ThemeColors.text-secondary;
                             vertical-alignment: center;
@@ -439,6 +466,7 @@ export component MainWindow inherits Window {
                         open_extension_folder => { root.open_extension_folder(); }
                         copy_chrome_extensions_url => { root.copy_chrome_extensions_url(); }
                         toggle_autostart(val) => { root.toggle_autostart(val); }
+                        open_onboarding => { root.show-onboarding = true; }
                     }
 
                     // Tab 0: Tasks View Body (Opaque background on top so prewarm views underneath are hidden at startup)
@@ -1346,7 +1374,7 @@ export component MainWindow inherits Window {
                             }
 
                             Text {
-                                text: "Update Download Link — " + root.update-url-target-filename;
+                                text: "Update Download Link - " + root.update-url-target-filename;
                                 font-size: 15px;
                                 font-weight: 700;
                                 color: ThemeColors.text-primary;
@@ -1423,7 +1451,7 @@ export component MainWindow inherits Window {
 
 // Standalone Download File Info Popup Window (Opens independently when browser intercepts a download)
 export component AddDownloadWindow inherits Window {
-    title: "SpeedFlow — Download File Info";
+    title: "SpeedFlow - Download File Info";
     icon: @image-url("../../assets/logo/logo-32.png");
     width: 620px;
     height: 350px;

@@ -41,6 +41,8 @@ pub struct AppSettings {
     pub speed_limit_kb: String,
     #[serde(default = "default_true")]
     pub is_dark: bool,
+    #[serde(default)]
+    pub onboarding_completed: bool,
 }
 
 fn default_true() -> bool {

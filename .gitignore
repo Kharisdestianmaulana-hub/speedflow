@@ -1,4 +1,6 @@
 /target
+dist/
+*.zip
 *.pem
 *.db
 *.db-shm

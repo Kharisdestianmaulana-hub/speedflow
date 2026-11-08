@@ -34,6 +34,7 @@ export component SfSettingsView inherits Rectangle {
     callback open_extension_folder();
     callback copy_chrome_extensions_url();
     callback toggle_autostart(bool);
+    callback open_onboarding();
 
     background: Colors.transparent;
 
@@ -61,7 +62,7 @@ export component SfSettingsView inherits Rectangle {
                 spacing: 8px;
 
                 Text {
-                    text: "STORAGE & DIRECTORIES";
+                    text: "STORAGE & FOLDERS";
                     font-size: 11px;
                     font-weight: 700;
                     color: ThemeColors.brand-primary;
@@ -80,13 +81,13 @@ export component SfSettingsView inherits Rectangle {
                         VerticalLayout {
                             spacing: 3px;
                             Text {
-                                text: "Default Download Directory";
+                                text: "Default Download Folder";
                                 font-size: 13px;
                                 font-weight: 600;
                                 color: ThemeColors.text-primary;
                             }
                             Text {
-                                text: "Primary destination folder on disk where completed downloads are saved.";
+                                text: "Main folder on your computer where finished downloads are saved.";
                                 font-size: 12px;
                                 color: ThemeColors.text-secondary;
                             }
@@ -100,7 +101,7 @@ export component SfSettingsView inherits Rectangle {
                                 height: 34px;
                                 horizontal-stretch: 1;
                                 text <=> root.download_path;
-                                placeholder: "Select directory...";
+                                placeholder: "Choose folder...";
                             }
 
                             SfButton {
@@ -126,13 +127,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Auto-Categorize Subfolders";
+                                    text: "Organize Files Automatically by Type";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Automatically sort downloads into Compressed, Programs, Video, Music, Documents, and Images folders.";
+                                    text: "Automatically sorts downloads into Video, Music, Documents, Programs, Images, and Compressed folders.";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -154,7 +155,7 @@ export component SfSettingsView inherits Rectangle {
                 spacing: 8px;
 
                 Text {
-                    text: "DOWNLOAD ENGINE & CONCURRENCY";
+                    text: "DOWNLOAD SPEED & CONNECTIONS";
                     font-size: 11px;
                     font-weight: 700;
                     color: ThemeColors.brand-primary;
@@ -180,13 +181,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Parallel Connections Per Download";
+                                    text: "Connections per File (Threads)";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Number of segmented HTTP byte-range threads per file.";
+                                    text: "Number of parallel connections used to download each file faster (recommended: 16).";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -211,7 +212,7 @@ export component SfSettingsView inherits Rectangle {
                                     }
 
                                     Rectangle {
-                                        width: 68px;
+                                        width: 82px;
                                         height: 30px;
                                         border-radius: 4px;
                                         background: ThemeColors.surface-hover;
@@ -219,7 +220,7 @@ export component SfSettingsView inherits Rectangle {
                                         border-color: ThemeColors.border;
 
                                         Text {
-                                            text: root.max_connections + " th";
+                                            text: root.max_connections + " Threads";
                                             font-size: 12px;
                                             font-weight: 600;
                                             color: ThemeColors.text-primary;
@@ -255,13 +256,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Simultaneous Active Downloads";
+                                    text: "Simultaneous Downloads";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Maximum concurrent active tasks before queuing.";
+                                    text: "How many files can download at the same time before other files wait in queue.";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -286,7 +287,7 @@ export component SfSettingsView inherits Rectangle {
                                     }
 
                                     Rectangle {
-                                        width: 68px;
+                                        width: 76px;
                                         height: 30px;
                                         border-radius: 4px;
                                         background: ThemeColors.surface-hover;
@@ -294,7 +295,7 @@ export component SfSettingsView inherits Rectangle {
                                         border-color: ThemeColors.border;
 
                                         Text {
-                                            text: root.max_simultaneous + " tasks";
+                                            text: root.max_simultaneous + " Files";
                                             font-size: 12px;
                                             font-weight: 600;
                                             color: ThemeColors.text-primary;
@@ -330,13 +331,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Automatic Retry On Network Disconnect";
+                                    text: "Automatically Resume on Disconnect";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Resumes failed chunks with exponential backoff (up to 5 retries).";
+                                    text: "Automatically tries to resume downloads if your internet temporarily drops (up to 5 retries).";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -384,13 +385,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Global Bandwidth Limiter";
+                                    text: "Download Speed Limiter";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Throttle download transfer rate to conserve network bandwidth.";
+                                    text: "Limit download speed so other apps and web browsing stay smooth.";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -439,13 +440,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Desktop System Notifications";
+                                    text: "Desktop Notifications";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Show toast notification when a download completes or encounters errors.";
+                                    text: "Show popup notification when a download completes or encounters an issue.";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -529,13 +530,13 @@ export component SfSettingsView inherits Rectangle {
                                 alignment: center;
                                 spacing: 3px;
                                 Text {
-                                    text: "Automatic Browser Integration (Microsoft Edge & Mozilla Firefox)";
+                                    text: "Automatic Extension Setup (Microsoft Edge & Mozilla Firefox)";
                                     font-size: 13px;
                                     font-weight: 600;
                                     color: ThemeColors.text-primary;
                                 }
                                 Text {
-                                    text: "Automatically registers SpeedFlow extension into Microsoft Edge and Mozilla Firefox via Windows Registry.";
+                                    text: "Automatically connects the SpeedFlow extension to Microsoft Edge and Mozilla Firefox.";
                                     font-size: 12px;
                                     color: ThemeColors.text-secondary;
                                 }
@@ -556,7 +557,7 @@ export component SfSettingsView inherits Rectangle {
                                     }
 
                                     SfButton {
-                                        text: (root.edge_integrated || root.firefox_integrated) ? "Update Auto-Integration" : "Auto-Integrate (Edge & Firefox)";
+                                        text: (root.edge_integrated || root.firefox_integrated) ? "Update Connection" : "Connect Edge & Firefox";
                                         variant: ButtonVariant.primary;
                                         btn-height: 30px;
                                         has-icon: true;
@@ -577,7 +578,7 @@ export component SfSettingsView inherits Rectangle {
                             spacing: 12px;
 
                             Text {
-                                text: "Detected Browsers & Local Bridge";
+                                text: "Detected Browsers & Status";
                                 font-size: 12px;
                                 font-weight: 600;
                                 color: ThemeColors.text-secondary;
@@ -613,7 +614,7 @@ export component SfSettingsView inherits Rectangle {
                                         }
 
                                         Text {
-                                            text: "Edge: " + (root.edge_integrated ? "Auto Active" : (root.edge_installed ? "Ready" : "Not Found"));
+                                            text: "Edge: " + (root.edge_integrated ? "Active" : (root.edge_installed ? "Ready" : "Not Found"));
                                             font-size: 11px;
                                             font-weight: 600;
                                             color: root.edge_integrated ? ThemeColors.brand-primary : (root.edge_installed ? #F59E0B : ThemeColors.text-tertiary);
@@ -647,7 +648,7 @@ export component SfSettingsView inherits Rectangle {
                                         }
 
                                         Text {
-                                            text: "Firefox: " + (root.firefox_integrated ? "Auto Active" : (root.firefox_installed ? "Ready" : "Not Found"));
+                                            text: "Firefox: " + (root.firefox_integrated ? "Active" : (root.firefox_installed ? "Ready" : "Not Found"));
                                             font-size: 11px;
                                             font-weight: 600;
                                             color: root.firefox_integrated ? ThemeColors.brand-primary : (root.firefox_installed ? #F59E0B : ThemeColors.text-tertiary);
@@ -681,7 +682,7 @@ export component SfSettingsView inherits Rectangle {
                                         }
 
                                         Text {
-                                            text: "Chrome: " + (root.chrome_integrated ? "Active" : (root.chrome_installed ? "Manual Setup" : "Not Found"));
+                                            text: "Chrome: " + (root.chrome_integrated ? "Active" : (root.chrome_installed ? "Ready to Setup" : "Not Found"));
                                             font-size: 11px;
                                             font-weight: 600;
                                             color: root.chrome_integrated ? ThemeColors.brand-primary : (root.chrome_installed ? #F59E0B : ThemeColors.text-tertiary);
@@ -715,7 +716,7 @@ export component SfSettingsView inherits Rectangle {
                                         }
 
                                         Text {
-                                            text: "Bridge: 127.0.0.1:19760 " + (root.bridge_active ? "(Listening)" : "(Offline)");
+                                            text: "Connection: " + (root.bridge_active ? "Connected" : "Offline");
                                             font-size: 11px;
                                             font-weight: 600;
                                             color: root.bridge_active ? ThemeColors.text-primary : ThemeColors.text-tertiary;
@@ -750,13 +751,13 @@ export component SfSettingsView inherits Rectangle {
                                         spacing: 2px;
 
                                         Text {
-                                            text: root.chrome_integrated ? "Google Chrome & Brave — Extension Loaded & Active" : "Google Chrome & Brave — Manual Setup Guide (Developer Mode)";
+                                            text: root.chrome_integrated ? "Google Chrome & Brave - Extension Connected & Active" : "Google Chrome & Brave - Easy Extension Setup";
                                             font-size: 13px;
                                             font-weight: 600;
                                             color: root.chrome_integrated ? ThemeColors.brand-primary : ThemeColors.text-primary;
                                         }
                                         Text {
-                                            text: "Chrome requires loading local extensions via Developer Mode in 3 quick steps:";
+                                            text: "Install the extension into Chrome or Brave in 3 quick steps:";
                                             font-size: 11px;
                                             color: ThemeColors.text-secondary;
                                         }
@@ -792,17 +793,17 @@ export component SfSettingsView inherits Rectangle {
                                     spacing: 4px;
 
                                     Text {
-                                        text: "1. Click 'Copy chrome://extensions' above, then paste & open it in your Chrome or Brave address bar.";
+                                        text: "1. Click 'Copy chrome://extensions' above, then paste and open it in your Chrome or Brave address bar.";
                                         font-size: 12px;
                                         color: ThemeColors.text-primary;
                                     }
                                     Text {
-                                        text: "2. Turn ON the 'Developer mode' switch in the top-right corner of the Chrome Extensions page.";
+                                        text: "2. Turn ON the 'Developer mode' switch in the top-right corner of the extensions page.";
                                         font-size: 12px;
                                         color: ThemeColors.text-primary;
                                     }
                                     Text {
-                                        text: "3. Click 'Open Extension Folder' above, then click 'Load unpacked' in Chrome and select the 'extension' folder (or drag & drop it).";
+                                        text: "3. Click 'Open Extension Folder' above, then click 'Load unpacked' in your browser and select the folder.";
                                         font-size: 12px;
                                         color: ThemeColors.text-primary;
                                     }
@@ -938,15 +939,28 @@ export component SfSettingsView inherits Rectangle {
                             }
 
                             Text {
-                                text: "High-Performance Multi-threaded Desktop Download Manager & Accelerator.";
+                                text: "Fast, reliable desktop download accelerator for Windows.";
                                 font-size: 12px;
                                 color: ThemeColors.text-secondary;
                             }
 
                             Text {
-                                text: "Powered by Rust 2024, Tokio Async Engine, Slint Flat UI & SQLite Database.";
+                                text: "Free and open-source software built for speed, stability, and privacy.";
                                 font-size: 11px;
                                 color: ThemeColors.text-tertiary;
+                            }
+
+                            HorizontalLayout {
+                                padding-top: 6px;
+                                alignment: start;
+                                SfButton {
+                                    text: "Run Setup Wizard";
+                                    variant: ButtonVariant.secondary;
+                                    btn-height: 30px;
+                                    has-icon: true;
+                                    icon: @image-url("../../../assets/icons/sliders.svg");
+                                    clicked => { root.open_onboarding(); }
+                                }
                             }
                         }
                     }

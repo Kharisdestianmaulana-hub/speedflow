@@ -32,7 +32,7 @@ impl NotificationService {
 
     pub fn notify_download_starting(filename: &str) {
         Self::show_if_background(
-            "SpeedFlow — Starting Download",
+            "SpeedFlow: Starting Download",
             &format!("Starting download \"{}\"", filename),
             NotificationTarget::TasksActive,
         );
@@ -40,7 +40,7 @@ impl NotificationService {
 
     pub fn notify_download_completed(filename: &str) {
         Self::show_if_background(
-            "SpeedFlow — Download Complete",
+            "SpeedFlow: Download Complete",
             &format!("Finished downloading \"{}\"", filename),
             NotificationTarget::TasksCompleted,
         );
@@ -48,7 +48,7 @@ impl NotificationService {
 
     pub fn notify_download_failed(filename: &str) {
         Self::show_if_background(
-            "SpeedFlow — Download Failed",
+            "SpeedFlow: Download Failed",
             &format!("Failed to download \"{}\". Click to retry.", filename),
             NotificationTarget::TasksActive,
         );
@@ -56,7 +56,7 @@ impl NotificationService {
 
     pub fn notify_download_queued(filename: &str) {
         Self::show_if_background(
-            "SpeedFlow — Added to Queue",
+            "SpeedFlow: Added to Queue",
             &format!("\"{}\" has been added to the download queue.", filename),
             NotificationTarget::QueueTab,
         );

@@ -1,3 +1,4 @@
+use directories::ProjectDirs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tracing::{info, warn};
@@ -23,18 +24,40 @@ pub struct BrowserStatus {
 pub struct BrowserIntegrationService;
 
 impl BrowserIntegrationService {
-    /// Resolves the absolute path of the extension directory
-    pub fn get_extension_path() -> PathBuf {
-        // 1. Try current working directory
-        let cwd_ext = PathBuf::from("extension");
-        if cwd_ext.exists() && cwd_ext.join("manifest.json").exists() {
-            if let Ok(canon) = cwd_ext.canonicalize() {
-                return canon;
+    /// Ensures embedded extension assets are written to disk if external folder is absent
+    pub fn ensure_embedded_extension_extracted(target_dir: &Path) -> std::io::Result<()> {
+        let icons_dir = target_dir.join("icons");
+        std::fs::create_dir_all(&icons_dir)?;
+
+        let files: &[(&str, &[u8])] = &[
+            ("manifest.json", include_bytes!("../../extension/manifest.json")),
+            ("background.js", include_bytes!("../../extension/background.js")),
+            ("popup.html", include_bytes!("../../extension/popup.html")),
+            ("popup.js", include_bytes!("../../extension/popup.js")),
+            ("README.md", include_bytes!("../../extension/README.md")),
+            ("icons/icon-16.png", include_bytes!("../../extension/icons/icon-16.png")),
+            ("icons/icon-32.png", include_bytes!("../../extension/icons/icon-32.png")),
+            ("icons/icon-48.png", include_bytes!("../../extension/icons/icon-48.png")),
+            ("icons/icon-128.png", include_bytes!("../../extension/icons/icon-128.png")),
+        ];
+
+        for (rel_path, content) in files {
+            let out_file = target_dir.join(rel_path);
+            let need_write = match std::fs::metadata(&out_file) {
+                Ok(meta) => meta.len() != content.len() as u64,
+                Err(_) => true,
+            };
+            if need_write {
+                std::fs::write(&out_file, content)?;
             }
-            return cwd_ext;
         }
 
-        // 2. Try adjacent to current executable (for packaged releases)
+        Ok(())
+    }
+
+    /// Resolves the absolute path of the extension directory
+    pub fn get_extension_path() -> PathBuf {
+        // 1. Try adjacent to current executable (for packaged releases / portable mode)
         if let Ok(mut exe) = std::env::current_exe() {
             exe.pop();
             let exe_ext = exe.join("extension");
@@ -43,6 +66,26 @@ impl BrowserIntegrationService {
                     return canon;
                 }
                 return exe_ext;
+            }
+        }
+
+        // 2. Try current working directory (for developer run / cargo run)
+        let cwd_ext = PathBuf::from("extension");
+        if cwd_ext.exists() && cwd_ext.join("manifest.json").exists() {
+            if let Ok(canon) = cwd_ext.canonicalize() {
+                return canon;
+            }
+            return cwd_ext;
+        }
+
+        // 3. Fallback: Automatically extract embedded extension to AppData directory
+        if let Some(proj_dirs) = ProjectDirs::from("com", "speedflow", "SpeedFlow") {
+            let app_ext = proj_dirs.data_local_dir().join("extension");
+            if Self::ensure_embedded_extension_extracted(&app_ext).is_ok() {
+                if let Ok(canon) = app_ext.canonicalize() {
+                    return canon;
+                }
+                return app_ext;
             }
         }
 
@@ -345,15 +388,11 @@ impl BrowserIntegrationService {
     pub fn install_integration() -> Result<BrowserStatus, String> {
         let ext_path = Self::get_extension_path();
         if !ext_path.exists() {
-            return Err(format!("Extension directory not found at: {}", ext_path.display()));
+            return Err("Extension folder was not found in the SpeedFlow installation directory.".to_string());
         }
 
         let edge_installed = Self::is_edge_installed();
         let firefox_installed = Self::is_firefox_installed();
-
-        if !edge_installed && !firefox_installed {
-            return Err("Neither Microsoft Edge nor Mozilla Firefox is installed on this PC.".to_string());
-        }
 
         info!("Registering SpeedFlow browser extension into Windows registry from: {}", ext_path.display());
 
@@ -376,8 +415,8 @@ impl BrowserIntegrationService {
             }
         }
 
-        if !errors.is_empty() && errors.len() == (edge_installed as usize + firefox_installed as usize) {
-            return Err(format!("Browser registrations failed: {}", errors.join("; ")));
+        if !errors.is_empty() && (edge_installed || firefox_installed) && errors.len() == (edge_installed as usize + firefox_installed as usize) {
+            return Err(format!("Could not register extension automatically: {}", errors.join("; ")));
         }
 
         Ok(Self::get_status())

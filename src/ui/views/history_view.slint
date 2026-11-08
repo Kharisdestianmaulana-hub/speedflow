@@ -164,7 +164,7 @@ component SfHistoryCard {
                         alignment: center;
 
                         Text {
-                            text: root.copied_feedback ? "✓ SHA-256 Copied!" : ("SHA-256: " + root.item.checksum);
+                            text: root.copied_feedback ? "Checksum Copied!" : ("Checksum: " + root.item.checksum);
                             max-width: 240px;
                             overflow: elide;
                             font-size: 11px;
@@ -232,7 +232,7 @@ export component SfHistoryView inherits Rectangle {
         }
 
         Text {
-            text: "Finished downloads will be recorded and archived here with integrity checksums.";
+            text: "All completed downloads are recorded and organized here.";
             font-size: 13px;
             color: ThemeColors.text-tertiary;
             horizontal-alignment: center;

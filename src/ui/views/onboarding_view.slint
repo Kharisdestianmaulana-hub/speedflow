@@ -1,0 +1,674 @@
+import { ThemeColors } from "../theme/colors.slint";
+import { ThemeTokens } from "../theme/tokens.slint";
+import { SfButton, ButtonVariant } from "../components/button.slint";
+import { SfInput } from "../components/input.slint";
+import { SfToggle } from "../components/toggle.slint";
+
+export component SfOnboardingView inherits Rectangle {
+    in-out property <int> current-step: 0; // 0: Welcome/Theme, 1: Storage, 2: Performance, 3: Browser/Finish
+    in-out property <string> download-path: "C:\\Users\\riray\\Downloads";
+    in-out property <bool> auto-categorize: true;
+    in-out property <int> max-connections: 16;
+    in-out property <bool> autostart: true;
+
+    in property <bool> chrome-installed: true;
+    in property <bool> edge-installed: true;
+    in property <bool> firefox-installed: false;
+    in property <bool> brave-installed: false;
+    in property <string> integration-msg: "";
+
+    callback browse-destination();
+    callback install-browser-integration();
+    callback toggle-autostart(bool);
+    callback finish-onboarding();
+
+    background: ThemeColors.background;
+
+    Flickable {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        content-width: root.width;
+        content-height: max(root.height, 680px);
+
+        VerticalLayout {
+            alignment: center;
+            padding: 24px;
+
+            HorizontalLayout {
+                alignment: center;
+
+                // Centered Main Wizard Card
+                Rectangle {
+                    width: 660px;
+                    border-radius: 12px;
+                    background: ThemeColors.surface;
+                    border-width: 1px;
+                    border-color: ThemeColors.border;
+                    clip: true;
+
+                    VerticalLayout {
+                        padding: 32px;
+                        spacing: 24px;
+
+                        // Header with Logo and Brand
+                        HorizontalLayout {
+                            spacing: 16px;
+                            alignment: start;
+
+                            Image {
+                                source: @image-url("../../../assets/logo/logo-48.png");
+                                width: 44px;
+                                height: 44px;
+                                vertical-alignment: center;
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 2px;
+
+                                Text {
+                                    text: "SpeedFlow Setup";
+                                    font-size: 20px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                }
+
+                                Text {
+                                    text: "Step " + (root.current-step + 1) + " of 4 : Quick Setup";
+                                    font-size: 12px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+                        }
+
+                        // Step Indicator Pills
+                        HorizontalLayout {
+                            spacing: 8px;
+                            height: 6px;
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                height: 6px;
+                                border-radius: 3px;
+                                background: root.current-step >= 0 ? ThemeColors.brand-primary : ThemeColors.border;
+                            }
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                height: 6px;
+                                border-radius: 3px;
+                                background: root.current-step >= 1 ? ThemeColors.brand-primary : ThemeColors.border;
+                            }
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                height: 6px;
+                                border-radius: 3px;
+                                background: root.current-step >= 2 ? ThemeColors.brand-primary : ThemeColors.border;
+                            }
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                height: 6px;
+                                border-radius: 3px;
+                                background: root.current-step >= 3 ? ThemeColors.brand-primary : ThemeColors.border;
+                            }
+                        }
+
+                        // Step 0: Welcome & Appearance
+                        if root.current-step == 0: VerticalLayout {
+                            spacing: 20px;
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text {
+                                    text: "Choose Appearance";
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Select your preferred visual style. You can change this anytime later in Settings.";
+                                    font-size: 13px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 16px;
+
+                                // Dark Theme Card
+                                Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 140px;
+                                    border-radius: 8px;
+                                    background: ThemeColors.is-dark ? ThemeColors.brand-primary.transparentize(0.9) : ThemeColors.background;
+                                    border-width: ThemeColors.is-dark ? 2px : 1px;
+                                    border-color: ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.border;
+
+                                    VerticalLayout {
+                                        padding: 16px;
+                                        alignment: space-between;
+
+                                        HorizontalLayout {
+                                            alignment: space-between;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/moon.svg");
+                                                width: 22px;
+                                                height: 22px;
+                                                colorize: ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                            }
+
+                                            if ThemeColors.is-dark: Rectangle {
+                                                width: 18px;
+                                                height: 18px;
+                                                border-radius: 9px;
+                                                background: ThemeColors.brand-primary;
+
+                                                Image {
+                                                    source: @image-url("../../../assets/icons/check.svg");
+                                                    width: 12px;
+                                                    height: 12px;
+                                                    horizontal-alignment: center;
+                                                    vertical-alignment: center;
+                                                    colorize: #FFFFFF;
+                                                }
+                                            }
+                                        }
+
+                                        VerticalLayout {
+                                            spacing: 2px;
+                                            Text {
+                                                text: "Dark Theme (Recommended)";
+                                                font-size: 13px;
+                                                font-weight: 700;
+                                                color: ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                            }
+                                            Text {
+                                                text: "Deep charcoal palette designed for comfortable viewing.";
+                                                font-size: 11px;
+                                                color: ThemeColors.text-secondary;
+                                            }
+                                        }
+                                    }
+
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { ThemeColors.is-dark = true; }
+                                    }
+                                }
+
+                                // Light Theme Card
+                                Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 140px;
+                                    border-radius: 8px;
+                                    background: !ThemeColors.is-dark ? ThemeColors.brand-primary.transparentize(0.9) : ThemeColors.background;
+                                    border-width: !ThemeColors.is-dark ? 2px : 1px;
+                                    border-color: !ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.border;
+
+                                    VerticalLayout {
+                                        padding: 16px;
+                                        alignment: space-between;
+
+                                        HorizontalLayout {
+                                            alignment: space-between;
+                                            Image {
+                                                source: @image-url("../../../assets/icons/sun.svg");
+                                                width: 22px;
+                                                height: 22px;
+                                                colorize: !ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.text-secondary;
+                                            }
+
+                                            if !ThemeColors.is-dark: Rectangle {
+                                                width: 18px;
+                                                height: 18px;
+                                                border-radius: 9px;
+                                                background: ThemeColors.brand-primary;
+
+                                                Image {
+                                                    source: @image-url("../../../assets/icons/check.svg");
+                                                    width: 12px;
+                                                    height: 12px;
+                                                    horizontal-alignment: center;
+                                                    vertical-alignment: center;
+                                                    colorize: #FFFFFF;
+                                                }
+                                            }
+                                        }
+
+                                        VerticalLayout {
+                                            spacing: 2px;
+                                            Text {
+                                                text: "Light Theme";
+                                                font-size: 13px;
+                                                font-weight: 700;
+                                                color: !ThemeColors.is-dark ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                            }
+                                            Text {
+                                                text: "Clean, high-contrast bright layout.";
+                                                font-size: 11px;
+                                                color: ThemeColors.text-secondary;
+                                            }
+                                        }
+                                    }
+
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { ThemeColors.is-dark = false; }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Step 1: Storage & Directories
+                        if root.current-step == 1: VerticalLayout {
+                            spacing: 20px;
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text {
+                                    text: "Download Folder";
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Choose where finished downloads should be saved on your computer.";
+                                    font-size: 13px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            // Directory path input row
+                            HorizontalLayout {
+                                spacing: 10px;
+                                height: 36px;
+
+                                SfInput {
+                                    horizontal-stretch: 1;
+                                    height: 36px;
+                                    text <=> root.download-path;
+                                    placeholder: "C:\\Users\\...\\Downloads";
+                                }
+
+                                SfButton {
+                                    text: "Browse Folder";
+                                    variant: ButtonVariant.secondary;
+                                    btn-height: 36px;
+                                    has-icon: true;
+                                    icon: @image-url("../../../assets/icons/folder.svg");
+                                    clicked => { root.browse-destination(); }
+                                }
+                            }
+
+                            // Auto-Categorize subfolders toggle
+                            Rectangle {
+                                border-radius: 8px;
+                                background: ThemeColors.background;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                HorizontalLayout {
+                                    padding: 14px;
+                                    alignment: space-between;
+                                    spacing: 16px;
+
+                                    VerticalLayout {
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+                                        spacing: 3px;
+
+                                        Text {
+                                            text: "Organize Files Automatically by Type";
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                        }
+                                        Text {
+                                            text: "Automatically sorts downloads into Video, Music, Documents, Programs, Images, and Compressed folders.";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        SfToggle {
+                                            checked <=> root.auto-categorize;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Step 2: Performance & Network
+                        if root.current-step == 2: VerticalLayout {
+                            spacing: 20px;
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text {
+                                    text: "Download Speed and Connections";
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "Choose how many parallel download connections to use for maximum download speed.";
+                                    font-size: 13px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            // Thread Presets
+                            HorizontalLayout {
+                                spacing: 12px;
+
+                                // 8 Threads Card
+                                Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 68px;
+                                    border-radius: 8px;
+                                    background: root.max-connections == 8 ? ThemeColors.brand-primary.transparentize(0.9) : ThemeColors.background;
+                                    border-width: root.max-connections == 8 ? 2px : 1px;
+                                    border-color: root.max-connections == 8 ? ThemeColors.brand-primary : ThemeColors.border;
+
+                                    VerticalLayout {
+                                        padding: 10px;
+                                        alignment: center;
+                                        spacing: 2px;
+
+                                        Text {
+                                            text: "8 Threads";
+                                            font-size: 14px;
+                                            font-weight: 700;
+                                            color: root.max-connections == 8 ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                            horizontal-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "Light";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.max-connections = 8; }
+                                    }
+                                }
+
+                                // 16 Threads Card (Recommended)
+                                Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 68px;
+                                    border-radius: 8px;
+                                    background: root.max-connections == 16 ? ThemeColors.brand-primary.transparentize(0.9) : ThemeColors.background;
+                                    border-width: root.max-connections == 16 ? 2px : 1px;
+                                    border-color: root.max-connections == 16 ? ThemeColors.brand-primary : ThemeColors.border;
+
+                                    VerticalLayout {
+                                        padding: 10px;
+                                        alignment: center;
+                                        spacing: 2px;
+
+                                        Text {
+                                            text: "16 Threads";
+                                            font-size: 14px;
+                                            font-weight: 700;
+                                            color: root.max-connections == 16 ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                            horizontal-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "Recommended";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.max-connections = 16; }
+                                    }
+                                }
+
+                                // 32 Threads Card
+                                Rectangle {
+                                    horizontal-stretch: 1;
+                                    height: 68px;
+                                    border-radius: 8px;
+                                    background: root.max-connections == 32 ? ThemeColors.brand-primary.transparentize(0.9) : ThemeColors.background;
+                                    border-width: root.max-connections == 32 ? 2px : 1px;
+                                    border-color: root.max-connections == 32 ? ThemeColors.brand-primary : ThemeColors.border;
+
+                                    VerticalLayout {
+                                        padding: 10px;
+                                        alignment: center;
+                                        spacing: 2px;
+
+                                        Text {
+                                            text: "32 Threads";
+                                            font-size: 14px;
+                                            font-weight: 700;
+                                            color: root.max-connections == 32 ? ThemeColors.brand-primary : ThemeColors.text-primary;
+                                            horizontal-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "Maximum Speed";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => { root.max-connections = 32; }
+                                    }
+                                }
+                            }
+
+                            // Windows startup toggle
+                            Rectangle {
+                                border-radius: 8px;
+                                background: ThemeColors.background;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                HorizontalLayout {
+                                    padding: 14px;
+                                    alignment: space-between;
+                                    spacing: 16px;
+
+                                    VerticalLayout {
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+                                        spacing: 3px;
+
+                                        Text {
+                                            text: "Launch on Windows Startup";
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                        }
+                                        Text {
+                                            text: "Starts SpeedFlow ready in the background tray when your computer turns on.";
+                                            font-size: 11px;
+                                            color: ThemeColors.text-secondary;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        SfToggle {
+                                            checked <=> root.autostart;
+                                            toggled(val) => { root.toggle-autostart(val); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Step 3: Browser Integration & Ready
+                        if root.current-step == 3: VerticalLayout {
+                            spacing: 20px;
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text {
+                                    text: "Browser Integration";
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    color: ThemeColors.text-primary;
+                                }
+                                Text {
+                                    text: "SpeedFlow catches downloads automatically from your browser so you do not need to copy and paste links.";
+                                    font-size: 13px;
+                                    color: ThemeColors.text-secondary;
+                                }
+                            }
+
+                            // Browser status overview
+                            Rectangle {
+                                border-radius: 8px;
+                                background: ThemeColors.background;
+                                border-width: 1px;
+                                border-color: ThemeColors.border;
+
+                                VerticalLayout {
+                                    padding: 16px;
+                                    spacing: 12px;
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+
+                                        Text {
+                                            text: "Browser Connection Status";
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                            vertical-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "Ready (Active)";
+                                            font-size: 12px;
+                                            font-weight: 700;
+                                            color: ThemeColors.brand-primary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    Rectangle { height: 1px; background: ThemeColors.border; }
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+
+                                        Text {
+                                            text: "Supported Browsers";
+                                            font-size: 12px;
+                                            color: ThemeColors.text-secondary;
+                                            vertical-alignment: center;
+                                        }
+
+                                        Text {
+                                            text: "Google Chrome, Microsoft Edge, Mozilla Firefox, Brave";
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: ThemeColors.text-primary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            SfButton {
+                                text: "Connect to Browsers";
+                                variant: ButtonVariant.secondary;
+                                btn-height: 34px;
+                                has-icon: true;
+                                icon: @image-url("../../../assets/icons/link.svg");
+                                clicked => { root.install-browser-integration(); }
+                            }
+
+                            if root.integration-msg != "": Rectangle {
+                                border-radius: 6px;
+                                background: ThemeColors.brand-primary.transparentize(0.9);
+                                border-width: 1px;
+                                border-color: ThemeColors.brand-primary.transparentize(0.6);
+
+                                HorizontalLayout {
+                                    padding: 10px;
+                                    spacing: 8px;
+                                    alignment: start;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../../assets/icons/info.svg");
+                                            width: 14px;
+                                            height: 14px;
+                                            colorize: ThemeColors.brand-primary;
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.integration-msg;
+                                        font-size: 12px;
+                                        color: ThemeColors.text-primary;
+                                        wrap: word-wrap;
+                                        horizontal-stretch: 1;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Navigation Footer Row
+                        HorizontalLayout {
+                            alignment: space-between;
+                            padding-top: 8px;
+
+                            if root.current-step > 0: SfButton {
+                                text: "Back";
+                                variant: ButtonVariant.ghost;
+                                btn-height: 36px;
+                                has-icon: true;
+                                icon: @image-url("../../../assets/icons/arrow-up.svg");
+                                clicked => { root.current-step -= 1; }
+                            }
+
+                            if root.current-step == 0: Rectangle { width: 1px; }
+
+                            if root.current-step < 3: SfButton {
+                                text: "Next Step";
+                                variant: ButtonVariant.primary;
+                                btn-height: 36px;
+                                has-icon: true;
+                                icon: @image-url("../../../assets/icons/arrow-down.svg");
+                                clicked => { root.current-step += 1; }
+                            }
+
+                            if root.current-step == 3: SfButton {
+                                text: "Finish Setup and Open SpeedFlow";
+                                variant: ButtonVariant.primary;
+                                btn-height: 36px;
+                                has-icon: true;
+                                icon: @image-url("../../../assets/icons/check.svg");
+                                clicked => { root.finish-onboarding(); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -432,7 +432,7 @@ unsafe fn run_win32_tray_loop(tx: UnboundedSender<TrayEvent>) {
         nid.u_callback_message = WM_TRAYICON;
         nid.h_icon = h_icon;
 
-        let tip = to_wide("SpeedFlow — Download Manager (Running in Background)");
+        let tip = to_wide("SpeedFlow - Download Manager (Running in Background)");
         let copy_len = tip.len().min(127);
         nid.sz_tip[..copy_len].copy_from_slice(&tip[..copy_len]);
 
