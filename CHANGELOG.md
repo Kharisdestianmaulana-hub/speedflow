@@ -7,15 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [Unreleased] (Target: v0.2.0)
 
-### Planned Features (Roadmap)
-- **Video and Audio Media Sniffer:** Browser overlay button to capture streaming media with resolution selection (1080p, 720p, MP4, MP3 audio).
-- **Automated Download Scheduler:** Configurable start and stop timers for queued downloads, with optional automatic PC Shutdown or Sleep upon queue completion.
-- **Flexible Speed Limiter and Profiles:** Per-task transfer rate throttling alongside quick-toggle speed profiles:
-  - *Gaming and Browsing Mode:* Caps download speed to 20% to keep network latency low and web browsing responsive.
-  - *Full Speed Mode:* Uncapped 100% download acceleration.
-- **Official Browser Store Availability:** Direct 1-click installation on Microsoft Edge Add-ons and Mozilla Firefox AMO (submissions currently under store review).
+### Planned Features (v0.2.0 Milestone)
+- **Automated Download Scheduler (Stable):** Configurable automated start and stop schedules for queued downloads, featuring post-download power actions:
+  - Automatic PC Shutdown upon queue completion.
+  - Automatic Sleep / Hibernate upon queue completion.
+  - Flexible day filters: Every day, workdays (Monday to Friday), or single run.
+- **Flexible Speed Limiter & Profiles (Stable):** Independent per-task bandwidth throttling alongside 1-click quick speed profiles:
+  - *Gaming and Browsing Mode:* Caps SpeedFlow transfer rate to 20% of maximum capacity, maintaining low latency (ping) and responsive web browsing.
+  - *Full Speed Mode:* Restores 100% uncapped parallel acceleration.
+- **Video & Audio Media Sniffer (Preview / Experimental):** Floating browser overlay widget to automatically detect streaming video and audio:
+  - Resolution selector: 1080p (Full HD), 720p (HD), 480p, and 360p (MP4 container).
+  - Audio extraction: Direct streaming audio conversion to MP3 format.
+- **Official Browser Store Availability:** 1-click direct installation from official stores:
+  - Microsoft Edge Add-ons Store (submission currently under review).
+  - Mozilla Firefox Add-ons / AMO (submission currently under review).
+
+### Future Roadmap (v0.3.0+)
+- **Auto-Update Checker:** Seamless in-app notification when a new release is published on GitHub Releases.
+- **Batch / Bulk Downloader:** Multi-URL paste support and sequential URL pattern generator (`file_[01-50].zip`).
+- **Floating Mini Desktop Widget:** Lightweight transparent desktop widget supporting drag-and-drop link interception from any active screen.
 
 ---
 
@@ -34,3 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **First-Run Onboarding Wizard:** Interactive 4-step configuration guide introducing new users to themes, destination folders, thread limits, and browser setup.
 - **Windows Platform Integration:** Native Win32 System Tray minimizing, background download execution, and native Windows shell balloon notifications.
 - **Dual Release Packaging:** Automated packaging for both Inno Setup Windows Installer (`SpeedFlow-Setup-v*.exe`) and standalone portable archive (`SpeedFlow-v*-Portable.zip`).
+
+[Unreleased]: https://github.com/Kharisdestianmaulana-hub/speedflow/compare/v0.1.0...HEAD
+[0.1.0-beta]: https://github.com/Kharisdestianmaulana-hub/speedflow/releases/tag/v0.1.0-beta
