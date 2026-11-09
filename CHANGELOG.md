@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Microsoft Edge Add-ons Store (submission currently under review).
   - Mozilla Firefox Add-ons / AMO (submission currently under review).
 
+### Fixes & Improvements (v0.2.0 Milestone)
+- **Embedded Win32 Application Icon:** Added `winres` resource compilation in `build.rs` to embed `speedflow.ico` directly into the PE executable binary. Fixes generic blank document icon in Windows Search, Start Menu, Taskbar, and Alt-Tab.
+- **Windows Startup Experience & Notification:**
+  - Added a non-intrusive system notification ("SpeedFlow Running in Background") upon Windows startup to clearly inform users that SpeedFlow is active in the tray without stealing screen focus. Clicking the notification opens the main window.
+  - Unified autostart handling across the Windows Registry (`HKCU\...\Run`) and the user Startup folder (`%APPDATA%\...\Startup`), ensuring clean toggling in Settings without orphaned shortcuts.
+  - Updated System Tray icon loader in `tray.rs` to retrieve the icon directly from the embedded binary resource, eliminating blank tray icons on portable installations.
+
 ### Future Roadmap (v0.3.0+)
 - **Auto-Update Checker:** Seamless in-app notification when a new release is published on GitHub Releases.
 - **Batch / Bulk Downloader:** Multi-URL paste support and sequential URL pattern generator (`file_[01-50].zip`).
